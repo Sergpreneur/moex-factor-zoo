@@ -1,0 +1,10 @@
+Frozen at (UTC): 2026-10-10T19:41:09Z
+Frozen before any characteristic was computed or any portfolio sorted.
+
+cad4ea74175de84424d836818abc0d6cb2a08bef50c20d8b274ca67713fa1b33  prereg/analysis_plan.md
+7fca98c300c428eefa1c23d5a18df49f773f49f0d26ba5557ea8eb49353d9ca2  moexzoo/config.py
+da50b0a2faf425213777c5fa3e6b82afd641e52fe244850388db1e8e5361933c  moexzoo/data.py
+1c435d179ef4ee1876414d07f4ec93c7a8abe8b2bb03bdb7011b6c04aecc0dfd  scripts/01_build_panel.py
+
+Raw data snapshot:
+6becbbb8ebd555df5082f1fe5c9876159edf77e4b8ef825f64b91371a308e8e0  data/raw/PROVENANCE.md

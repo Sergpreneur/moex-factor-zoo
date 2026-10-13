@@ -1,0 +1,37 @@
+\begin{tabular}{llp{6.3cm}cl}
+\toprule
+ID & Cluster & Definition (at the last session of month $t$) & Sign & Source \\
+\midrule
+MOM12\_1 & Momentum & $\prod_{j=1}^{11}(1+R_{t-j})-1$ & $+$ & \citet{jegadeesh1993returns} \\
+MOM6\_1 & Momentum & $\prod_{j=1}^{5}(1+R_{t-j})-1$ & $+$ & \citet{jegadeesh1993returns} \\
+MOM12\_7 & Momentum & $\prod_{j=6}^{11}(1+R_{t-j})-1$ & $+$ & \citet{novymarx2012momentum} \\
+RESMOM & Momentum & CAPM residuals $t{-}11..t{-}1$ / their s.d.; betas from $t{-}35..t{-}1$ & $+$ & \citet{blitz2011residual} \\
+HIGH52 & Momentum & $P_t / \max P$ over 252 sessions & $+$ & \citet{george2004week} \\
+\addlinespace[2pt]
+STR & Reversal & $R_t$ & $-$ & \citet{jegadeesh1990evidence} \\
+LTR & Reversal & $\prod_{j=12}^{35}(1+R_{t-j})-1$ & $-$ & \citet{debondt1985overreact} \\
+\addlinespace[2pt]
+SEAS & Seasonality & mean of $R_{t+1-12j}$, $j=1..5$ & $+$ & \citet{heston2008seasonality} \\
+\addlinespace[2pt]
+BETA & Low risk & Dimson beta ($m_d$, $m_{d-1}$), 252 sessions & $-$ & \citet{frazzini2014betting} \\
+IVOL & Low risk & s.d.\ of CAPM residuals, month $t$ & $-$ & \citet{ang2006cross} \\
+TVOL & Low risk & s.d.\ of $r_d$, month $t$ & $-$ & \citet{ang2006cross} \\
+MAX & Low risk & $\max r_d$, month $t$ & $-$ & \citet{bali2011maxing} \\
+\addlinespace[2pt]
+DBETA & Skewness/downside & beta on days with $m_d<\bar m$, 252 sessions & $+$ & \citet{ang2006downside} \\
+SKEW & Skewness/downside & skewness of $r_d$, 252 sessions & $-$ & \citet{amaya2015realized} \\
+ISKEW & Skewness/downside & skewness of CAPM residuals, 252 sessions & $-$ & \citet{boyer2010expected} \\
+COSKEW & Skewness/downside & $E[\varepsilon_i\varepsilon_m^2]/(\sqrt{E\varepsilon_i^2}E\varepsilon_m^2)$, 252 sessions & $-$ & \citet{harvey2000conditional} \\
+\addlinespace[2pt]
+SIZE & Size/liquidity & $\log$ market cap$_t$ & $-$ & \citet{banz1981relationship} \\
+AMIHUD & Size/liquidity & mean $|r_d|/\text{value}_d$, 252 sessions & $+$ & \citet{amihud2002illiquidity} \\
+DVOL & Size/liquidity & $\log$ mean daily value, 252 sessions & $-$ & \citet{brennan1998alternative} \\
+TURN & Size/liquidity & $\sum$ value$_{t-11..t}$ / mean cap & $-$ & \citet{datar1998liquidity} \\
+ZERO & Size/liquidity & share of no-trade or zero-return sessions, 252 sessions & $+$ & \citet{lesmond1999new}; \citet{bekaert2007liquidity} \\
+SPREAD & Size/liquidity & Corwin--Schultz spread, month $t$ & $+$ & \citet{corwin2012simple}; \citet{amihud1986asset} \\
+CVVAL & Size/liquidity & s.d./mean of monthly value, $t{-}11..t$ & $-$ & \citet{chordia2001trading} \\
+ABVOL & Size/liquidity & $\log$(daily value in $t$ / daily value $t{-}12..t{-}1$) & $+$ & \citet{gervais2001high} \\
+\addlinespace[2pt]
+DY & Payout & 12-month gross dividends / $P_t$ (payers only) & $+$ & \citet{litzenberger1979effect} \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,1325 @@
+% !TEX program = xelatex
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{mathptmx}
+\usepackage[no-math]{fontspec}
+\setmainfont{TeX Gyre Termes}
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+\setotherlanguage{russian}
+\newfontfamily\cyrillicfont{FreeSerif}[Ligatures=TeX]
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.25}
+\usepackage{booktabs,array,multirow,tabularx}
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf,skip=4pt]{caption}
+\usepackage{pdflscape}
+\usepackage[authoryear,round]{natbib}
+\usepackage{xcolor}
+\definecolor{linkblue}{HTML}{1F4E79}
+\usepackage[colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue]{hyperref}
+\usepackage{microtype}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=*}
+\emergencystretch=2.5em
+\usepackage[bottom]{footmisc}
+\usepackage{float}
+\usepackage[section]{placeins}
+
+\input{numbers}
+\input{numbers_validation}
+
+\newcommand{\tabnote}[1]{\par\vspace{3pt}\begin{minipage}{\linewidth}\footnotesize\setstretch{1.0}#1\end{minipage}}
+\newcommand{\RW}{Romano--Wolf}
+\newcommand{\cmark}{\checkmark}
+
+\title{How Many Factors Are Real on the Moscow Exchange?\\[4pt]
+\large A Pre-Specified Multiple-Testing Study of the Russian Factor Zoo}
+\author{Sergey Nefedov\thanks{Lomonosov Moscow State University. ORCID: 0009-0008-8929-4848.
+The analysis plan was frozen, hashed and committed to version control before any characteristic was computed
+(Section~\ref{sec:design}); code, plan and factor return series: \url{https://github.com/Sergpreneur/moex-factor-zoo}.}}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Do the return anomalies documented in developed markets exist on the Moscow Exchange once the number of tests is
+taken into account? I test implementations of 25 price-, trading- and payout-based predictors on MOEX-listed equities (holding
+months 2012:01--2026:09), with data free of survivorship bias for shares but covering depositary receipts only in part,
+under a protocol fixed before estimation, and evaluate each under
+a ladder of seven significance criteria. Seven characteristics clear $|t|>1.96$ in the predicted direction; five
+survive the \RW{} stepdown, whose bootstrap critical value (\val{RWcrit}) exceeds both the Harvey--Liu--Zhu hurdle
+and the normal-theory Bonferroni bound: with fifteen years of monthly data, autocorrelation-robust $t$-statistics are
+more dispersed than the normal distribution that normal-theory corrections assume. Four survivors are closely related
+measures of intermediate-horizon momentum---nearness to the 52-week high, six- and twelve-month and residual
+momentum---and are largely redundant rather than four independent discoveries; the fifth, a high-volume premium, is
+fragile. The implemented
+low-risk, liquidity, size, skewness, seasonality and dividend-yield signals do not survive, but premia with annual Sharpe
+ratios below about one would often go undetected in a sample of this length. The one-month reversal is reversed: among
+liquid shares last month's winners keep winning ($t=\val{TSTR}$ against the reversal hypothesis). Momentum remains
+significant net of estimated spread costs, with short legs restricted to index shares and under bounds for unobserved
+delisting losses, but its capacity in equal-weighted form is small. After the 2022 exclusion of foreign investors no
+premium changes significantly once the 25 differences are corrected for multiplicity, yet the confidence intervals
+admit large changes in either direction.
+
+\medskip\noindent
+\textbf{JEL:} G12, G14, G15, C12. \quad
+\textbf{Keywords:} factor zoo, multiple testing, Romano--Wolf, replication, momentum, Russian stock market, MOEX.
+\end{abstract}
+
+\clearpage
+\thispagestyle{empty}
+\begin{russian}
+\begin{abstract}
+\sloppy\noindent
+Существуют ли на Московской бирже аномалии доходности, найденные на развитых рынках, если учесть число проверяемых
+гипотез? В работе проверяются реализации 25 предикторов доходности, основанных на ценах, торговой активности и
+дивидендах, на выборке бумаг Мосбиржи (месяцы удержания 2012:01--2026:09), которая свободна от ошибки выжившего в части
+акций, но лишь частично охватывает депозитарные расписки, по протоколу,
+зафиксированному до оценивания; каждый оценивается по лестнице из семи критериев значимости. Порог $|t|>1{,}96$ в
+предсказанном направлении проходят семь характеристик; пошаговую процедуру Романо--Вольфа выдерживают пять, причём её
+бутстреп-критическое значение (3,39) выше и порога Харви--Лю--Чжу, и нормального порога Бонферрони: на
+пятнадцатилетней месячной выборке $t$-статистики с поправкой на автокорреляцию распределены шире нормального закона.
+Четыре выживших сигнала --- меры ценового моментума на горизонте 6--12 месяцев (близость к 52-недельному максимуму,
+моментум за 6 и 12 месяцев, остаточный моментум), которые во многом дублируют друг друга и не являются четырьмя
+независимыми открытиями; пятый,
+премия за аномальный объём торгов, неустойчив. Реализованные сигналы низкого риска, ликвидности, размера, асимметрии,
+сезонности и дивидендной доходности поправку не выдерживают, однако премии с годовым коэффициентом Шарпа ниже
+примерно единицы на выборке такой длины часто остаются незамеченными. Краткосрочный реверс имеет обратный знак: среди
+ликвидных акций победители прошлого месяца продолжают расти. Моментум остаётся значимым после оценённых спредовых
+издержек, при коротких позициях только в акциях индекса и при консервативных допущениях о потерях при делистинге,
+но его ёмкость в равновзвешенной форме мала. После ухода нерезидентов в 2022~г. ни одна премия не изменилась значимо с
+учётом поправки на множественность, однако доверительные интервалы допускают и крупные изменения в обе стороны.
+\end{abstract}
+\end{russian}
+
+\clearpage
+\setcounter{page}{1}
+
+% =====================================================================================
+\section{Introduction}\label{sec:intro}
+
+Fifty years of empirical asset pricing have produced hundreds of variables that predict the cross-section of
+stock returns---a ``zoo'' of factors in the words of \citet{cochrane2011discount}. When so many hypotheses are tested
+on overlapping data, the conventional $|t|>1.96$ threshold admits many false discoveries. \citet{harvey2016cross}
+argue that a new factor should clear $t>3$; \citet{harvey2020false} make explicit the trade-off between false and
+missed discoveries. Large replication exercises disagree on how serious the problem is.
+\citet{hou2020replicating} find that 65\% of 452 anomalies fail to clear $|t|=1.96$ once microcaps are neutralised,
+whereas \citet{jensen2023replication} conclude, with a hierarchical Bayesian model and data for 93 countries, that
+most factors replicate; \citet{chen2022open} reach a similarly benign verdict, and \citet{chordia2020anomalies}
+quantify how much of the zoo multiple-testing control removes. Almost all of this evidence comes from the United
+States or from global panels in which any single emerging market carries little weight.
+
+The Russian market has its own, smaller literature on return anomalies, and it reaches mixed conclusions.
+\citet{teplova2014momentum} find momentum profits only for short formation and holding periods and contrarian
+profits at horizons of six months and longer; \citet{abramov2019pricing} report significant size and liquidity
+factors over 1997--2017 with weakening after 2011; \citet{ovechkin2022econometric} find significant market and
+momentum premia but insignificant size and value premia over 2011--2020; \citet{gurov2023illiquidity} finds the
+expected-illiquidity premium insignificant in most specifications. Each of these results is, in effect, a single
+test on its own sample, with its own definitions and portfolio rules, and none is adjusted for the number of
+hypotheses that the Russian and international literatures have examined. A reader cannot tell which of the
+reported anomalies would survive a common protocol and an honest correction for multiplicity.
+
+Russia is also an unusually informative laboratory. Its cross-section is narrow and concentrated: the 100th most
+liquid share traded a median of only about \val{FloorFirst}~million roubles a month in 2012 and between 10 and 12
+million in 2014--2016 (Table~\ref{tab:sample}). Trading is dominated by individuals, who accounted for 79\% of share trading
+volume in 2023 \citep{moex2024retail}. And the market went through a sharp, exogenous change in its investor base:
+equity trading was suspended at the end of February 2022, transactions with investors from ``unfriendly'' jurisdictions
+required special permission \citep{decree81}, and when trading resumed for 33 index shares on 24 March 2022 \citep{cbr2022reopen}
+the market had in effect been closed to foreign capital. If anomalies reflect limits to arbitrage, they should be stronger in such a
+market, and the 2022 break allows a before-and-after comparison within one market.
+
+This paper tests 25 return predictors on all shares traded on the MOEX shares market, with data that are free of
+survivorship bias for shares but cover depositary receipts only in part (Section~\ref{sec:sources}), under a protocol that was written, hashed and committed to version control before any
+characteristic was computed. The characteristics are those that can be built from prices, trading activity and
+dividends---momentum, reversal, seasonality, low risk, skewness, size, liquidity and payout. Each is implemented
+as closely to its source as daily market data and a common portfolio protocol allow and is signed by the direction
+the source reports (for two liquidity measures, by the paper that relates the measure to returns); Appendix
+Table~\ref{tab:adapt} lists where the implementation departs from the source, for
+example CAPM rather than Fama--French residuals for residual momentum and idiosyncratic volatility, or daily rather
+than intraday or expected skewness. The tests therefore concern these implementations rather than exact
+replications of the original definitions. Each long--short portfolio is evaluated under a
+ladder of seven criteria: the conventional $t>1.96$, the $t>3$ hurdle of \citet{harvey2016cross}, the Holm
+family-wise correction, the Benjamini--Hochberg and Benjamini--Yekutieli false-discovery-rate procedures, the
+\citet{romano2005stepwise} stepdown test with a stationary bootstrap, and the Deflated Sharpe Ratio of
+\citet{bailey2014deflated}. The family-level probability of backtest overfitting \citep{bailey2017probability}, the
+effective number of independent tests and an empirical-Bayes model in the spirit of \citet{jensen2023replication}
+complete the picture. Every variant in a pre-specified robustness grid is run through the whole ladder.
+
+The results are easy to state. Seven of the 25 characteristics clear $t>1.96$ in the predicted direction; five
+survive the \RW{} test. The \RW{} critical value, \val{RWcrit}, is larger than the Harvey--Liu--Zhu hurdle and even
+than the normal-theory Bonferroni bound of \val{BonfCrit}. The reason is not fat-tailed returns. Dependence among
+the factors lowers the bar, but by less than an effective number of about \val{NeffLiJi} independent tests would
+suggest; with 177 monthly observations the Newey--West standard error is itself estimated with noise, so the
+$t$-statistics are more dispersed than the standard normal; and serial dependence in the returns adds to that
+dispersion. Normal-based corrections such as
+Holm and Benjamini--Hochberg are therefore anticonservative in samples of this length: in simulations under the global
+null, Holm commits a family-wise error in \val{FWholmPar}--\val{FWholmBoot}\% of samples and the $t>3$ rule in
+\val{FWtthreePar}--\val{FWtthreeBoot}\%, against \val{FWrwPar}--\val{FWrwBoot}\% for the bootstrap test, which is itself
+mildly liberal. Twelve-to-seven-month momentum passes Holm and Benjamini--Hochberg but fails the bootstrap test
+($p_{\text{RW}}=\val{PrwMOM127}$).
+
+Four of the five survivors are forms of intermediate-horizon price momentum: nearness to the 52-week high
+\citep{george2004week}, with an annualised Sharpe ratio of \val{SRHIGH52}, six- and twelve-month momentum
+\citep{jegadeesh1993returns} and residual momentum \citep{blitz2011residual}. They are not four independent
+discoveries: their returns are strongly correlated, and six- and twelve-month momentum are spanned by the 52-week
+high and residual momentum, so the robust evidence is better described as one momentum family; the data do not pin
+down how many distinct effects that family contains. The fifth survivor is the high-volume return
+premium of \citet{gervais2001high}. Residual momentum survives the \RW{} test in every full-sample specification; the
+high-volume premium does not survive a one-session implementation lag, the 50 most liquid names, price-only returns or
+a size-calibrated version of the test. None of the implemented low-risk, size, liquidity, skewness, seasonality,
+long-term reversal or dividend-yield signals survives, even at the conventional threshold. The one-month reversal of
+\citet{jegadeesh1990evidence} is reversed: among
+liquid shares, last month's winners outperform last month's losers by \val{MeanAbsSTR}\% a month
+($t=\val{TSTR}$ against the reversal hypothesis). The continuation survives a one-session implementation lag, so it
+is unlikely to be a bid--ask artefact. In exploratory analysis it is a property of the liquid segment as a whole, while
+weak signs of the usual reversal appear only in the lowest turnover tercile of the broad cross-section, in line with the
+short-term momentum of \citet{medhat2022short}.
+
+The momentum survivors remain significant net of spread-based trading costs, with break-even one-way
+costs of \val{BERESMOM}--\val{BEHIGH52} basis points, and they survive bounds for the unobserved losses of delisted
+shares. They also stay significant when short positions are confined to the most liquid shares or to index
+constituents and during the 2022 short-sale ban, and a borrow fee would have to exceed \val{BEfeeMin}--\val{BEfeeMax}\% a
+year to eliminate their net premia. Their capacity is small, however: under a square-root price-impact rule the net
+premia of the equal-weighted portfolios vanish at between \val{CapFullMin} and \val{CapFullMax} million roubles per leg
+over the full sample, and at higher but still modest sizes after 2022. The exclusion of foreign investors in 2022 did not
+change any individual premium significantly once the 25 differences are corrected for multiplicity, and no significant
+change is detected in the average anomaly premium (\val{RegZooPre}\% versus \val{RegZooPost}\% a month). Absence of
+evidence is not evidence of no change: the 95\% confidence interval for the change in the average premium runs from
+$\val{RegZooLo}$ to \val{RegZooHi} percentage points a month, and the before-and-after comparison cannot separate the exit
+of foreign capital from the other shocks of 2022. Several liquidity-related premia switch from negative to positive after
+2022, but the evidence is not strong enough to survive correction. Finally, the power analysis shows what fifteen years of an emerging market can and cannot
+reveal: the \RW{} test detects a factor with an annual Sharpe ratio of 0.5 with probability \val{PowRWsr0p5} and
+one with a Sharpe ratio of 1.0 with probability \val{PowRWsr1p0}. The survivors have Sharpe ratios between
+\val{SRsurvMin} and \val{SRsurvMax}; many anomalies documented in the United States are much weaker, so their
+failure to replicate in Russia is weak evidence that they are absent.
+
+The paper contributes in four ways. It provides the first multiple-testing study of the factor zoo on the
+Russian market, with a common protocol applied to share data free of survivorship bias. It shows that with the fifteen-year samples typical
+of emerging markets the dependence-robust bootstrap bar is higher, not lower, than the familiar $t>3$ rule, because
+autocorrelation-robust $t$-statistics are more dispersed than the normal distribution, so that normal-theory
+corrections overstate significance. It documents robust short-term continuation among liquid Russian shares. And it
+uses the 2022 change in the investor base to ask whether anomaly premia respond to the
+exit of foreign arbitrage capital. The pre-analysis plan, all deviations from it and the code are part of the
+replication package.
+
+Section~\ref{sec:lit} reviews the literature. Section~\ref{sec:data} describes the market and the data.
+Section~\ref{sec:design} sets out the pre-specified design. Section~\ref{sec:results} reports the results,
+Section~\ref{sec:discussion} discusses them, and Section~\ref{sec:conclusion} concludes.
+
+% =====================================================================================
+\section{Related literature}\label{sec:lit}
+
+\paragraph{Multiple testing and the factor zoo.}
+The concern that data mining manufactures return predictability goes back at least to \citet{lo1990data}.
+\citet{white2000reality} proposed the bootstrap reality check for the best of many strategies,
+\citet{hansen2005test} refined it, and \citet{romano2005stepwise} turned it into a stepdown procedure that controls
+the family-wise error rate while exploiting the dependence among test statistics; \citet{romano2016efficient} give
+the adjusted $p$-values used here. False-discovery-rate control \citep{benjamini1995controlling} is valid under
+independence or positive dependence, and the \citet{benjamini2001control} version under arbitrary dependence at a
+cost in power. In finance, \citet{harvey2016cross} catalogue hundreds of published factors and derive a hurdle near
+$t=3$ for new ones; \citet{harvey2020false} weigh false against missed discoveries. \citet{hou2020replicating}
+replicate 452 anomalies and find that most fail once microcaps are handled with NYSE breakpoints and value weights,
+while \citet{jensen2023replication} use a hierarchical Bayesian model to argue that most factors replicate and that
+correlated factors should not be treated as independent tests. \citet{chen2022open} provide open-source
+replications; \citet{chordia2020anomalies} show how many strategies mined from accounting data look significant by
+chance; \citet{feng2020taming} and \citet{giglio2021thousands} develop tests for new factors and for thousands of
+alphas. \citet{mclean2016academic} document that anomaly returns fall out of sample and after publication;
+\citet{jacobs2020anomalies} find that this decline is concentrated in the United States. \citet{bailey2014deflated}
+correct the Sharpe ratio of the best of $N$ trials for selection and non-normality, and \citet{bailey2017probability}
+estimate the probability that the in-sample winner underperforms out of sample. This paper applies all of these
+tools to one market on one protocol and reports them side by side.
+
+\paragraph{Anomalies in emerging markets.}
+\citet{rouwenhorst1999local} documents momentum, size and value effects in emerging markets.
+\citet{griffin2003momentum} show that momentum profits are widespread internationally and are not explained by
+business-cycle risk. \citet{bekaert2007liquidity} use the proportion of zero daily returns to show that liquidity is
+priced in emerging markets. \citet{cakici2013size} study 18 emerging markets over 1990--2011 and find a value effect
+in all of them and a momentum effect in all regions except Eastern Europe. \citet{hanauer2019cross}, using 28
+emerging markets, find cash-flow-to-price, gross profitability, equity issuance and momentum to be pervasive and no
+positive relation between risk and return. These studies test a few factors at a time and, with the exception of
+the Bayesian evidence in \citet{jensen2023replication}, do not adjust for the number of tests; they also pool many
+countries, so a single market's idiosyncrasies are averaged away.
+
+\paragraph{The cross-section of Russian stock returns.}
+Early work focused on aggregate returns: \citet{goriaev2006risks} analyse the risks of the market's first decade, and
+\citet{anatolyev2008retrospective} documents highly unstable relations between Russian index returns and their
+determinants. \citet{teplova2011higher} find that the unconditional CAPM explains little of the cross-section of
+liquid Russian stocks and that downside-risk measures perform better. \citet{teplova2014momentum} report that the
+best momentum strategy on 134 stocks uses three-month windows and that contrarian strategies dominate at horizons of
+six months or more. \citet{kinnunen2017expected} find that idiosyncratic risk is priced at the industry level with a
+sign that flips after 2008. \citet{abramov2019pricing} build a five-factor model with significant market, size and
+liquidity factors over 1997--2017; \citet{abramov2025evolution} report that most of 15 long-only factor portfolios
+outperformed the MOEX total-return index over 2007--2024. \citet{teplova2022implicit} find that the effect of implicit trading
+costs on MOEX returns over 2010--2020 is concentrated in small capitalisations and significant mainly in time-series
+tests, and \citet{gurov2023illiquidity} finds the expected-illiquidity premium insignificant in most specifications. \citet{ovechkin2022econometric} find
+significant market and momentum premia and insignificant size and value premia over 2011--2020, and
+\citet{nazarova2023momentum} find momentum profitable after costs among highly liquid shares in 2019--2021. None of
+these studies corrects for multiple testing across factors, and their samples end before or shortly after the 2022
+break.
+
+% =====================================================================================
+\section{Institutional background and data}\label{sec:data}
+
+\subsection{The Russian equity market, 2012--2026}
+
+The Moscow Exchange (MOEX) is the only significant venue for Russian shares. Over the sample the main board moved from
+same-day (T0) to T+2 settlement, completed on 2 September 2013, and to T+1 on 31 July 2023 \citep{moex2023t1}. The
+settlement regime matters for the ex-dividend date, which precedes the dividend record date by the settlement lag
+(Section~\ref{sec:returns}). On 28 February 2022 equity trading was suspended; transactions in which residents
+transfer securities to persons from jurisdictions designated as unfriendly became subject to special permission
+\citep{decree81}; trading resumed for 33 shares of the MOEX Russia index on 24 March 2022, with short sales banned
+\citep{cbr2022reopen}, and for all shares on 28 March 2022 \citep{moex2022allshares}. The short-sale ban, in force from 24
+February, was lifted on 1 June 2022 \citep{cbr2022shortban}. Payments to such foreign holders
+were subsequently directed to special type-C accounts \citep{decree95}, and individuals became the dominant investor
+group \citep{moex2024retail}. The market is concentrated in a few large state-related and resource firms, and dividends are
+large and highly seasonal, which makes accurate dividend adjustment essential.
+
+\subsection{Data sources}\label{sec:sources}
+
+All market data originate from the Moscow Exchange's Information and Statistical Server (ISS). Because the ISS
+endpoints were not reachable from the analysis environment, the data are taken from public mirrors that store raw
+ISS responses (Appendix~\ref{app:data}). Daily prices, volumes and rouble trading values for every share ever traded
+on the MOEX shares market come from the collection of \citet{andreev2026moexmomentum}, which includes delisted
+shares. Its ticker
+dictionary lists \val{NdictSecids} securities (SECIDs), \val{NdictDelisted} of which were delisted before the end of
+the sample; daily price histories exist for \val{NpriceSecids}. Prices are stitched across trading boards, with the
+primary board taking precedence and the odd-lot board used only when nothing else traded. The same source provides a
+register of splits and reverse splits, dividends reconciled across several sources and checked against MOEX's own
+register-closing dates, and the MCFTRR total-return index, which is used as the market return. Historical numbers of
+issued shares come from the quarterly MOEX index calculation bases from December 2012 onwards \citep{moexutils}, and
+current share counts from the MOEX list of securities of May 2026. The risk-free rate is the Bank of Russia key rate
+(the refinancing rate before September 2013). The data contain ordinary and preferred shares, including shares of
+foreign issuers traded on the shares market. Depositary receipts are covered only in part. The source contains the
+receipt histories of six foreign issuers whose receipts were later converted into Russian shares under the same
+ticker (TCS Group, Ozon, VK, Etalon, MD Medical Group and United Medical Group), but not those of receipts that were
+delisted or replaced by shares with a new ticker. Eight such receipts were constituents of the MOEX Russia index at
+some point---those of Ros Agro, X5, Fix Price, Globaltrans, HeadHunter, Lenta and QIWI, and Rusal's Russian
+depositary receipts until 2015---and up to \val{IdxMissMaxWord} index constituents at a time are therefore missing;
+the Russian successors of such issuers enter as new securities. The share segment of the sample is survivorship-free,
+but the receipt segment is not. The pre-analysis plan assumed that the source contained no receipts; Appendix
+\ref{app:deviations} records the discrepancy, and Section~\ref{sec:robust} drops the six receipt histories. There are no accounting
+data, so the value, profitability, investment and accrual families of anomalies cannot be studied.
+
+\subsection{Returns, corporate actions and screens}\label{sec:returns}
+
+Prices before a split are multiplied by the ratio of old to new shares, volumes are divided by it, and dividend
+amounts with a record date before the split are rescaled in the same way; \val{NsplitSecids} securities have recorded
+splits. Dividends are gross of tax. All dividend sources but one store the record date, and the ex-date is located
+on the share's own trading days: the session after the record date under T0, the session before it under T+2, and the
+record date itself under T+1. The exception, derived from Yahoo Finance, stores the ex-date, which is used directly; it supplies \val{DivYahooShare}\% of the payments used (\val{DivYahooShareU}\% of those in U100 holding
+months), and its dates are checked in Appendix~\ref{app:data}. Of the dividend payments in the data, \val{NdivUsed} are used; \val{NdivSkipGap} whose
+implied ex-date falls outside the record month or an adjacent month (the share did not trade around the record date),
+\val{NdivSkipBeforefirst} that precede the first price and \val{NdivSkipNonrub} paid in foreign currency are dropped.
+Russian issuers often pay a final and an interim dividend with the same record date; such payments are summed. A legal change affects the timing of payouts: from 1 January 2014 the dividend record date must
+fall 10 to 20 days after the decision to pay \citep{law379}, which moved most record dates from April--May, before the
+annual meeting, to June--July. As a result, in May and June 2014 the 2013 payouts had already left the trailing
+12-month window used for dividend yield while the 2014 payouts had not yet arrived, and the number of U100 shares with a
+trailing dividend falls to 20 and 32 in those two months, against about 60 otherwise. The daily total return is
+$r_d=(P_d+D_d)/P_{d^-}-1$, where $d^-$ is the share's previous trading day. A daily return enters daily statistics only if the share also traded in the previous session and
+the gap between the two sessions is at most 14 calendar days, which removes the month-long 2022 suspension from
+volatility, beta and spread estimates. A single print that jumps by more than $+100\%$ or $-60\%$ and reverts to within
+20\% of the previous price is deleted; \val{NbadPrints} prints are removed. The monthly return is the change in the
+total-return index between the last trades of consecutive months. A share that stops trading during a month earns the
+return to its last trade; a share held in a portfolio that does not trade at all in the holding month earns zero.
+These rules record no loss after the last trade: the final payoff of a delisted share---a buyout or exchange price, a
+write-off, or capital locked in an account---is not observed. In U100, \val{TermCharged} shares stop trading for good
+while in the universe: for \val{TermChargedPartial} the last trade falls inside a holding month (their average return to
+the last trade is $\val{TermPartialMean}$\%), and for \val{TermChargedNoneWord} it precedes the holding month. In
+\val{TermNoneAfter} cases the share is still in U100 at the formation date after its last trade and is then held as cash
+for a month.
+Another \val{TermSuspWord} position-months fall in suspensions after which trading resumed. Section~\ref{sec:robust} bounds
+the effect of the terminal events, charging each of them once.
+
+To validate the construction, I build a value-weighted portfolio of the constituents of the MOEX index bases with
+point-in-time share counts and compare it with MCFTRR. Over the \val{ValT} months from 2013 the monthly correlation is
+\val{ValCorr}, and the portfolio earns \val{ValDiffAnn} percentage points a year more than the index---the expected
+order of magnitude, since MCFTRR is net of dividend withholding tax and uses free-float weights with caps; the
+replication also omits the index constituents that are missing from the source (Section~\ref{sec:sources}).
+
+\subsection{Universes and sample}\label{sec:universes}
+
+At the end of each month $t$ a share is \emph{active} if it traded on at least $\min(10,\lceil n_t/2\rceil)$ of the
+month's $n_t$ sessions, its last trade lies within the final five sessions of the month, it traded in each of the past
+12 months, and it is not marked as delisted. The cap at half the month's sessions binds in six formation months with 18 or
+fewer sessions and matters materially only in March 2022, which had six. When ISS records a change of ticker, the predecessor is used before the change and the successor
+afterwards; redomiciled securities are treated as new securities. The baseline universe U100 contains the 100 most
+liquid active shares by the median monthly trading value over months $t-11$ to $t$, a relative cut that keeps the
+breadth constant while the rouble value of trading grows by an order of magnitude. U50 contains the 50 most liquid,
+and UALL all active shares.
+
+Holding months run from January 2012 to September 2026 ($T=177$). On average \val{NallMean} shares are active;
+\val{NeverAll} different shares are active at some point, and \val{NdeadAll} of them no longer trade, under the same or a
+new ticker, at the end of the sample. Of the \val{NeverHundred} shares that ever enter U100, \val{NdeadHundred}
+(\val{NdeadHundredPct}\%) are gone by September 2026, so a sample built from currently listed shares would miss about a
+third of the baseline universe.
+Table~\ref{tab:sample} and Figure~\ref{fig:sample} describe the sample. The liquidity floor of U100 falls from about
+\val{FloorFirst}~million roubles a month in 2012 to 10--12 million in 2014--2016 and rises to between 500 and 800 million in
+2024--2026, as retail inflows and higher nominal turnover lifted trading across the board.
+
+Market capitalisation, needed for size, turnover and value weights, is available point-in-time only for index
+constituents. For other shares I use the nearest index-base share count of the same security and otherwise the
+current share count; shares with neither have no capitalisation. Coverage of U100 rises from \val{CapCovFirst}\% in
+2012 to 100\% from 2024. Because the fallback counts contain look-ahead, a robustness variant uses point-in-time
+counts only.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Sample description}\label{tab:sample}
+\resizebox{\linewidth}{!}{\input{tables/tab_sample}}
+\tabnote{The sample consists of holding months 2012:01--2026:09; each row aggregates the formation months whose holding
+month falls in the year. $N_{\text{ALL}}$: average number of active shares (UALL). U100 floor: median across months of
+the trailing 12-month median monthly trading value of the least liquid share in U100. Median cap: median market
+capitalisation of U100 shares with a share count. Cap coverage: share of U100 with a capitalisation. Payers: average
+number of U100 shares that paid a dividend in the previous 12 months. MCFTRR: MOEX Russia total-return index (net of
+dividend tax), compounded over the holding months. $r_f$: compounded key rate. 2026 covers January--September.}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_sample.pdf}
+\caption{The cross-section of MOEX shares. Panel (a): number of active shares (UALL) at each formation month. Panel
+(b): trailing 12-month median monthly trading value of the least liquid share in U100 and U50 (log scale, millions of
+roubles). The dashed line marks the February 2022 suspension.}\label{fig:sample}
+\end{figure}
+
+% =====================================================================================
+\section{Pre-specified research design}\label{sec:design}
+
+\subsection{The pre-analysis plan}
+
+The design was written down before estimation in a pre-analysis plan that fixes the sample, universes, the 25
+characteristics with their windows, minimum data requirements and predicted signs, the portfolio rules, the test
+statistics, the ladder of corrections, the robustness grid, the hypotheses and a list of commitments. Before the plan
+was frozen, only diagnostics that do not condition on any characteristic had been examined: counts of shares,
+sessions and dividends; the unconditional distribution of next-month returns in U100; the market-replication check
+above; and the coverage of share counts. The plan was frozen on 10 October 2026 at 19:41 UTC; its SHA-256 hash and
+those of the configuration and data-construction code were recorded and committed to a version-controlled repository
+before the first characteristic was computed. This is an internal pre-specification rather than a filing with an
+external registry, and it does not erase the author's knowledge of the published literature; its purpose is to make
+every analytic choice visible and fixed in advance. Appendix~\ref{app:deviations} lists the deviations: a few
+implementation details not spelled out in the plan, a bug fix found by an independent code audit after the results
+were seen, a more efficient design of the power simulation, and several exploratory analyses added after seeing the
+results, which are labelled as such wherever they appear.
+
+\subsection{Characteristics}
+
+Table~\ref{tab:defs} lists the 25 characteristics. They fall into seven clusters: momentum (12-1, 6-1 and 12-7 month
+momentum, residual momentum and nearness to the 52-week high), reversal (one-month and long-term), seasonality, low
+risk (Dimson beta, idiosyncratic and total volatility, maximum daily return), skewness and downside risk (downside
+beta, total, idiosyncratic and co-skewness), size and liquidity (size, Amihud illiquidity, trading value, turnover,
+the zero-return proportion, the Corwin--Schultz spread, the variability of trading value and abnormal trading volume)
+and payout (dividend yield). Each is computed at the last session of month $t$ from data available at that time; the
+exception is the fallback share counts behind size and turnover, which contain look-ahead and have a point-in-time
+variant (Section~\ref{sec:universes}). Perturbation tests confirm that no characteristic, universe membership or cost
+estimate changes when the price and trading data after $t$ are altered (Appendix~\ref{app:data}). The predicted sign is
+the direction reported in the source paper (for the zero-return proportion and the spread, whose source papers propose
+measures, in the paper that relates the measure to returns).
+
+The implementations follow the sources where daily market data allow and adapt them where they do not, and all
+portfolios follow the common protocol below whatever the holding rule of the source. Appendix
+Table~\ref{tab:adapt} lists the differences. The substantive ones are four. Residual momentum and idiosyncratic
+volatility use CAPM rather than Fama--French three-factor residuals, because without book equity there is no value
+factor; Section~\ref{sec:robust} re-estimates both with a two-factor model that adds a size factor built from the
+sample. Total skewness is measured from daily returns over a year rather than as the intraday realised skewness of
+\citet{amaya2015realized}, and idiosyncratic skewness is historical rather than the model-based expected skewness of
+\citet{boyer2010expected}. The beta portfolio is a low-minus-high quintile spread on \citet{dimson1979risk} betas
+rather than the beta-neutral, leveraged portfolio of \citet{frazzini2014betting}, so its CAPM alpha is the closer test
+of their prediction. Several windows and horizons also differ (coskewness from daily rather than monthly returns;
+abnormal volume over a month rather than a day or a week; long-term reversal, seasonality and the variability of
+trading value over shorter histories). A failure to survive is therefore a statement about the implemented signal,
+not necessarily about the original anomaly.
+
+\begin{table}[!htbp]
+\centering\footnotesize
+\caption{The 25 characteristics}\label{tab:defs}
+\resizebox{\linewidth}{!}{\input{tables/tab_definitions}}
+\tabnote{$R_t$: monthly total return; $r_d$: daily total return; $m_d$: daily MCFTRR return; ``252 sessions'' are the
+252 sessions ending at the last session of month $t$; ``month $t$'' uses the sessions of the formation month. Minimum
+data: all required months for momentum; at least 20 of 24 months for LTR; at least two years for SEAS; at least 24
+months for RESMOM; 120 valid daily returns for the 12-month return-based measures, 120 trading days for HIGH52 and
+DVOL, and 120 sessions since the first trade for ZERO; 15 valid daily returns for one-month measures; 12 valid two-day
+pairs for SPREAD. Sign: the direction of predictability reported in the source; long--short portfolios are oriented
+so that a positive mean confirms it. For ZERO and SPREAD the first source proposes the measure and the second relates
+illiquidity of that kind to expected returns. DY is sorted among dividend payers only. Appendix Table~\ref{tab:adapt}
+lists the differences from the source definitions.}
+\end{table}
+
+\subsection{Portfolios}
+
+At the end of each month, the shares in the universe with a non-missing characteristic are sorted into quintiles,
+ties broken by ticker; a factor-month requires at least 25 shares. Portfolios are equally weighted in the baseline,
+and the long--short return is the top minus the bottom quintile, oriented by the predicted sign. Portfolios are held
+for one month and rebalanced monthly; returns are gross of costs and taxes. Equal weights are natural here: U100
+excludes the illiquid tail, and value weights in a market as concentrated as Russia's would make each quintile a bet on
+a handful of firms. Capped value weights \citep{jensen2023replication} are a robustness variant.
+
+\subsection{Test statistics and the ladder}
+
+Let $r_{k,t}$ be the oriented long--short return of characteristic $k=1,\dots,K$ ($K=25$) in month $t$, with mean
+$\bar r_k$ over its $n_k$ available months. The test statistic is $t_k=\bar r_k/\widehat{\mathrm{se}}(\bar r_k)$
+with the \citet{newey1987simple} variance
+\begin{equation}
+\widehat{V}(\bar r_k)=\frac{1}{n_k^{2}}\Big[\sum_t e_{k,t}^2+2\sum_{j=1}^{L}\Big(1-\frac{j}{L+1}\Big)\sum_{t}e_{k,t}e_{k,t-j}\Big],
+\qquad L=\lfloor 4(T/100)^{2/9}\rfloor=4,
+\end{equation}
+where $e_{k,t}=r_{k,t}-\bar r_k$ in available months and zero otherwise. The two-sided $p$-value is $p_k$. A
+\emph{discovery} is a rejection with $t_k>0$; rejections with the opposite sign are reported separately. The ladder has
+seven rungs:
+\begin{enumerate}[label=R\arabic*.]
+\item Conventional: $t_k>1.96$.
+\item The \citet{harvey2016cross} hurdle: $t_k>3$.
+\item \citet{holm1979simple}: with ordered $p_{(1)}\le\dots\le p_{(K)}$, reject $(1),\dots,(i)$ as long as
+$p_{(j)}\le\alpha/(K-j+1)$ for all $j\le i$; this controls the family-wise error rate (FWER).
+\item \citet{benjamini1995controlling}: reject the $i^\ast$ smallest $p$-values, $i^\ast=\max\{i:p_{(i)}\le i\alpha/K\}$;
+false-discovery rate (FDR) control under independence or positive dependence.
+\item \citet{benjamini2001control}: as R4 with $\alpha$ replaced by $\alpha/\sum_{i=1}^{K}i^{-1}$; FDR control under
+arbitrary dependence.
+\item \citet{romano2005stepwise} stepdown with the studentised statistics. Months are resampled jointly for all factors
+with the stationary bootstrap of \citet{politis1994stationary} (mean block length six months, $B=10{,}000$), and the
+centred statistics $t^\ast_{k,b}=(\bar r^\ast_{k,b}-\bar r_k)/\widehat{\mathrm{se}}^\ast_{k,b}$ are computed with the
+same Newey--West estimator in every resample. Starting from all hypotheses, the critical value is the 95\% quantile of
+$\max_{k\in A}|t^\ast_{k,b}|$ over the set $A$ of hypotheses not yet rejected; all $k\in A$ with $|t_k|$ above it are
+rejected and the step is repeated. Adjusted $p$-values follow \citet{romano2016efficient}. This rung controls the FWER
+asymptotically while accounting for the dependence and the non-normality of the factor returns;
+Section~\ref{sec:multiplicity} examines its size at the present sample length.
+\item The Deflated Sharpe Ratio of \citet{bailey2014deflated}. With monthly Sharpe ratio $\widehat{SR}_k$, skewness
+$\hat\gamma_{3,k}$ and kurtosis $\hat\gamma_{4,k}$,
+\begin{equation}
+\mathrm{DSR}_k=\Phi\!\left(\frac{(\widehat{SR}_k-SR_0)\sqrt{n_k-1}}{\sqrt{1-\hat\gamma_{3,k}\widehat{SR}_k+\frac{\hat\gamma_{4,k}-1}{4}\widehat{SR}_k^2}}\right),\quad
+SR_0=\sqrt{\widehat V[\widehat{SR}]}\Big[(1-\gamma)\Phi^{-1}\Big(1-\tfrac{1}{N}\Big)+\gamma\Phi^{-1}\Big(1-\tfrac{1}{Ne}\Big)\Big],
+\end{equation}
+where $\gamma$ is the Euler--Mascheroni constant, $N=25$ and $\widehat V[\widehat{SR}]$ is the cross-sectional variance
+of the 25 Sharpe ratios. A factor passes if $\mathrm{DSR}_k>0.95$.
+\end{enumerate}
+At the level of the family I report the probability of backtest overfitting (PBO) of choosing the in-sample best of the
+25 factors, estimated by combinatorially symmetric cross-validation with 16 blocks \citep{bailey2017probability}, and
+the effective number of independent tests from the eigenvalues $\lambda_i$ of the factor correlation matrix, both as
+$1+(K-1)(1-\mathrm{Var}(\lambda)/K)$ \citep{nyholt2004simple} and as $\sum_i[\mathbb 1(\lambda_i\ge1)+(\lambda_i-\lfloor\lambda_i\rfloor)]$
+\citep{li2005adjusting}.
+
+\paragraph{An empirical-Bayes complement.}
+Frequentist corrections ask which individual factors can be declared real while controlling the error rate across the
+family. \citet{jensen2023replication} ask instead what can be inferred about each factor's premium when the premia are
+themselves drawn from a common distribution. Following them, let $\hat{\boldsymbol\mu}=\boldsymbol\mu+\boldsymbol\varepsilon$,
+$\boldsymbol\varepsilon\sim N(0,\Sigma)$, where $\Sigma$ is the sample covariance of the factor returns divided by the
+sample length, and $\mu_k=\mu_0+c_{j(k)}+w_k$ with cluster effects $c_j\sim N(0,\tau_c^2)$ for the seven clusters of
+Table~\ref{tab:defs} (Appendix~\ref{app:deviations} discusses the nine labels used in one table of the plan) and
+idiosyncratic effects $w_k\sim N(0,\tau_w^2)$. The hyperparameters are estimated by maximum
+marginal likelihood; the posterior of $\boldsymbol\mu$ is normal, and a factor ``replicates'' if its 95\% posterior
+interval excludes zero on the positive side.
+
+\subsection{Hypotheses}
+
+The plan states five hypotheses. H1: each oriented premium is positive ($\mu_k>0$), evaluated under every rung. H2:
+the global null that all $\mu_k=0$, tested with the single-step max-$|t|$ bootstrap. H3: the number of discoveries does
+not increase along the ladder (descriptive). H4: premia differ between the periods before and after March 2022, for
+each factor and for the average of the 25---exploratory, given a post-break sample of 55 months. H5: factors that
+survive the \RW{} rung earn positive returns net of estimated trading costs.
+
+The robustness grid comprises capped value weights, U50, UALL, terciles, a one-session implementation lag (entry at the
+close of the first trade in month $t+1$), U100 without preferred shares whose ordinary share is also in U100,
+price-only holding returns, the exclusion of the transition months February and March 2022, CAPM alphas, and
+point-in-time size and turnover. Every variant is run through the full ladder; the \RW{} test is also repeated with
+mean block lengths of three and twelve months. For the DSR sensitivity the plan sets $N=250$, its count of
+configurations in the grid.
+
+% =====================================================================================
+\section{Results}\label{sec:results}
+
+\subsection{Single-test evidence}
+
+Table~\ref{tab:baseline} reports the baseline long--short portfolios and Figure~\ref{fig:ladder} shows their
+$t$-statistics against the thresholds of the ladder. The momentum cluster dominates. Nearness to the 52-week high
+earns \val{MeanHIGH52}\% a month ($t=\val{THIGH52}$, annualised Sharpe ratio \val{SRHIGH52}); six-month momentum
+\val{MeanMOM61}\% ($t=\val{TMOM61}$); residual momentum \val{MeanRESMOM}\% ($t=\val{TRESMOM}$); twelve-month momentum
+\val{MeanMOM121}\% ($t=\val{TMOM121}$); and twelve-to-seven-month momentum \val{MeanMOM127}\% ($t=\val{TMOM127}$). Two
+trading-activity characteristics also clear the conventional bar: abnormal trading volume (\val{MeanABVOL}\%,
+$t=\val{TABVOL}$) and the variability of trading value (\val{MeanCVVAL}\%, $t=\val{TCVVAL}$). CAPM alphas are close to
+the raw means because the average market excess return over the sample was small (\val{MktExcess}\% a month).
+
+Nothing else clears $t>1.96$ in the predicted direction. Low-risk portfolios have positive but insignificant means
+(beta, $t=\val{TBETA}$; idiosyncratic volatility, $t=\val{TIVOL}$; maximum return, $t=\val{TMAX}$). Size
+($t=\val{TSIZE}$), Amihud illiquidity ($t=\val{TAMIHUD}$), the zero-return proportion ($t=\val{TZERO}$), dividend yield
+($t=\val{TDY}$), seasonality ($t=\val{TSEAS}$) and long-term reversal ($t=\val{TLTR}$) are statistically zero, and the
+spread portfolio has the wrong sign ($t=\val{TSPREAD}$). The most striking failure is the one-month reversal: the
+portfolio that buys last month's losers and sells last month's winners loses \val{MeanAbsSTR}\% a month
+($t=\val{TSTR}$). Section~\ref{sec:str} returns to this short-term continuation.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Baseline long--short portfolios and the ladder of significance}\label{tab:baseline}
+\resizebox{\linewidth}{!}{\input{tables/tab_baseline}}
+\tabnote{Equal-weighted quintile long--short portfolios in U100, oriented by the predicted sign (Table~\ref{tab:defs}).
+Mean and $\alpha$ in \% per month; $t$-statistics with Newey--West standard errors ($L=4$). SR: annualised Sharpe ratio.
+$\alpha$, $\beta$: intercept and slope of the regression on the MCFTRR excess return. Rungs: R1 $t>1.96$; R2 $t>3$;
+R3 Holm; R4 Benjamini--Hochberg; R5 Benjamini--Yekutieli; R6 \RW{} stepdown (stationary bootstrap, mean block 6,
+$B=10{,}000$); R7 Deflated Sharpe Ratio $>0.95$ with $N=25$. \cmark: discovery in the predicted direction; $\times$:
+significant with the opposite sign. $p_{\text{RW}}$: \RW{} adjusted $p$-value. Holding months 2012:01--2026:09
+($T=177$). IVOL, TVOL, MAX and SPREAD have 176 months because March 2022 had only six sessions, too few for the
+one-month daily measures; DY has 176 because fewer than 25 U100 shares had a trailing dividend in May 2014
+(Section~\ref{sec:returns}).}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_ladder.pdf}
+\caption{The factor zoo on MOEX. Newey--West $t$-statistics of the 25 oriented long--short portfolios (baseline),
+coloured by cluster, against the conventional, Harvey--Liu--Zhu, normal-theory Bonferroni and \RW{} (first-step,
+bootstrap) thresholds.}\label{fig:ladder}
+\end{figure}
+
+\subsection{Correcting for multiplicity}\label{sec:multiplicity}
+
+The global null that no characteristic predicts returns is rejected decisively: the largest $|t|$ is far beyond the
+bootstrap distribution of the maximum ($p=\val{GlobalNullP}$), confirming H2. The bottom row of
+Table~\ref{tab:baseline} and the first row of Table~\ref{tab:counts} show how the discoveries thin out along the
+ladder: seven at R1, six at R2, six under Holm, seven under Benjamini--Hochberg, six under Benjamini--Yekutieli, five
+under \RW{} and none under the Deflated Sharpe Ratio. The five \RW{} survivors are the 52-week high, six-month momentum,
+residual momentum, twelve-month momentum and abnormal volume. Twelve-to-seven-month momentum clears the Harvey--Liu--Zhu,
+Holm and Benjamini--Hochberg bars but not \RW{} ($p_{\text{RW}}=\val{PrwMOM127}$); the variability of trading value
+clears only R1 and Benjamini--Hochberg.
+
+The \RW{} critical value deserves attention. At the first step it equals \val{RWcrit}, more than the Harvey--Liu--Zhu
+hurdle and more than \val{BonfCrit}, the Bonferroni bound for 25 two-sided normal tests. Three forces determine it,
+and simulations separate them (Figure~\ref{fig:boot}). Dependence among the factors lowers the bar: the factors are
+correlated (the mean absolute pairwise correlation is \val{MeanAbsCorr}, and the first eigenvalue of their correlation
+matrix is \val{EigOne}, or \val{EigShare}\% of the total), and standard normal statistics with the factors' correlation
+matrix have a 95\% quantile of the maximum of \val{QnormCorr} instead of \val{QnormIndep} for independent ones. The
+reduction is smaller than the eigenvalue-based effective number of tests suggests (\val{NeffLiJi} by the Li--Ji formula
+and \val{NeffNyholt} by Nyholt's; \val{NeffLiJi} independent tests would give \val{MechSidakNeff}), because moderate
+correlations matter little in the extreme tail that a family-wise test controls. Estimation noise in the Newey--West
+standard error raises the bar: with 177 monthly observations the studentised statistics are more dispersed than
+$N(0,1)$. For i.i.d.\ normal returns a Newey--West $t$-statistic with $L=4$ exceeds 3.09 in absolute value with
+probability \val{MechIidPthree} rather than 0.0020, and with the factors' correlation matrix the 95\% quantile of the
+maximum rises to \val{QiidCorrL4}. The remaining \val{DecompData} reflects features of the actual returns that the
+bootstrap preserves and the i.i.d.\ benchmark does not, such as serial dependence and volatility clustering;
+consistent with this, the critical value rises with the bootstrap block length, to \val{RWcritB3}, \val{RWcrit} and
+\val{RWcritB12} for mean blocks of three, six and twelve months.
+
+Fat tails of the returns are not responsible:
+replacing every factor's returns by the normal scores of their ranks, which sets the kurtosis to three while keeping the
+dependence, raises the critical value slightly, to \val{MechNormalScores}. In the bootstrap the centred statistics have
+a median standard deviation of \val{MechSDmed} (between \val{MechSDmin} and \val{MechSDmax} across factors) but nearly
+normal tails (median kurtosis \val{MechKurtMed}); rescaling them to unit variance lowers the critical value to
+\val{MechRescaled}, so most of the excess comes from their dispersion rather than their shape. A longer HAC lag does not help, because
+it makes the variance estimate noisier: the critical value rises to \val{MechCritLeight} with $L=8$ and
+\val{MechCritLtwelve} with $L=12$, roughly in step with the i.i.d.\ benchmark (\val{QiidCorrL8} and \val{QiidCorrL12}). Procedures that convert $t$-statistics into normal $p$-values---Holm and both FDR rules---therefore understate
+the multiplicity burden in samples of this length, and the rule of thumb $t>3$ is not conservative enough. The noise in
+the variance estimate is generic to any fifteen-year monthly sample, the typical history of an emerging market; the
+other two components depend on the data. The survivors are the same with mean blocks of three and twelve months except that
+twelve-to-seven-month momentum enters with the shorter block and abnormal volume drops out with the longer one. Monte
+Carlo error is modest: with five other seeds the first-step critical value lies between \val{SeedCritMin} and
+\val{SeedCritMax} and the survivors are \val{SeedSame}, with abnormal volume a marginal case (adjusted $p$ between
+\val{SeedPabvolMin} and \val{SeedPabvolMax}).
+
+The \RW{} guarantee is asymptotic, and at this sample length the test is mildly liberal. In \val{FWreps} simulated
+samples under the global null in each of two designs (Appendix~\ref{app:data}; exploratory), it commits a family-wise
+error in \val{FWrwPar}\% (95\% interval \val{FWrwParLo}--\val{FWrwParHi}\%) and \val{FWrwBoot}\%
+(\val{FWrwBootLo}--\val{FWrwBootHi}\%) of the samples, against a nominal 5\%. The normal-theory procedures err more
+often: Holm, which under the global null rejects exactly when Bonferroni does, in \val{FWholmPar}\% and
+\val{FWholmBoot}\% of the samples, and the $t>3$ rule in \val{FWtthreePar}\% and \val{FWtthreeBoot}\%. Calibrating the
+nominal level so that the simulated error rate does not exceed 5\% in either design gives $\alpha^\ast=\val{FWalphaStar}$
+and a first-step critical value of \val{FWcritStar}. At that level the four momentum survivors and the wrong-signed
+short-term reversal remain significant, while abnormal volume (adjusted $p=\val{FWpAbvol}$) does not
+(Table~\ref{tab:revchecks}).
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_boot.pdf}
+\caption{Distribution of the maximum of 25 absolute $t$-statistics under the null: stationary bootstrap of the 25 MOEX
+factors (mean block 6, $B=10{,}000$); Newey--West $t$-statistics ($L=4$) computed from i.i.d.\ normal returns with
+$T=177$ and the factors' correlation matrix (100{,}000 replications); and standard normal statistics with the same
+correlation matrix. Vertical lines mark the 95\% quantiles; the dotted line is the Bonferroni bound for 25 independent
+normal tests.}\label{fig:boot}
+\end{figure}
+
+No factor passes the pre-specified Deflated Sharpe Ratio. The reason is the benchmark. With $N=25$ the expected maximum
+Sharpe ratio under the null is computed from the cross-sectional variance of the 25 estimated Sharpe ratios, and that
+variance contains the true dispersion between strong momentum factors and a strongly negative short-term reversal, not
+only estimation noise. The implied benchmark is an annualised Sharpe ratio of \val{SRzeroN}, so even the best factor,
+with \val{SRHIGH52}, has a DSR of only \val{DsrHIGH52}. Using the effective number of tests ($N=\val{NeffLiJi}$) lowers
+the benchmark to \val{SRzeroNeff} and changes nothing; using the 250 configurations of the robustness grid raises it to
+\val{SRzeroAll}. As an exploratory diagnostic I replace the benchmark by the expected maximum Sharpe ratio under the
+dependence-preserving bootstrap null. The benchmark falls to \val{SRzeroBoot}, and exactly the five \RW{} survivors pass.
+The closed-form DSR is a useful screen for a researcher's own specification search, where the trials are variations of one
+strategy; applied to a zoo of genuinely different factors, its variance-based benchmark is extremely conservative.
+
+At the family level, the probability that the in-sample best of the 25 factors underperforms the median factor out of
+sample is \val{PBO} (CSCV on the \val{PBOT} months in which all factors are available). The in-sample winner is a momentum
+variant in \val{PBOmom}\% of the 12{,}870 splits (the 52-week high alone in \val{PBOhigh}\%) and abnormal volume in
+\val{PBOabvol}\%; out of sample it ranks among the top five of the 25 factors in \val{PBOtopfive}\% of splits, and its
+median rank is \val{PBOrankWord}. Read literally, H3 fails at one step: Benjamini--Hochberg, which controls the false-discovery
+rather than the family-wise error rate, admits one factor more than Holm (the variability of trading value). The count
+never exceeds its conventional level; it falls from seven to six at the Harvey--Liu--Zhu, Holm and
+Benjamini--Yekutieli rungs, which drop the variability of trading value, and to five at the \RW{} rung, which also drops
+twelve-to-seven-month momentum.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Number of discoveries along the ladder, all specifications}\label{tab:counts}
+\input{tables/tab_ladder_counts}
+\tabnote{Number of the 25 characteristics declared a discovery in the predicted direction under each rung. Wrong sign
+(RW): \RW{} rejections with a negative oriented mean. RW crit.: first-step \RW{} critical value. Variants as described in
+Section~\ref{sec:design}. CAPM alpha: ladder applied to market-hedged returns. Net of trading costs: returns after the
+cost model of Section~\ref{sec:costs}. Pre/post-2022: ladders estimated separately in each regime (exploratory).}
+\end{table}
+
+\subsection{Short-term continuation}\label{sec:str}
+
+The one-month reversal is one of the oldest anomalies \citep{jegadeesh1990evidence}. On MOEX it has the wrong sign: in
+U100 the winners of month $t$ beat its losers by \val{MeanAbsSTR}\% in month $t+1$, a \RW{}-significant rejection of
+the reversal hypothesis in the opposite direction. The continuation is unlikely to be a microstructure artefact. Bid--ask
+bounce and stale prices would produce reversal, not continuation, and the effect is even stronger when the portfolio is entered
+at the close of the first trade of the holding month ($t=-5.46$; Table~\ref{tab:robust_t}). It is present before and
+after 2022 ($t=\val{RegTpreSTR}$ and $\val{RegTpostSTR}$), in U50 ($t=-3.27$) and with value weights ($t=-2.40$), and it
+survives a Fama--MacBeth control for twelve-month momentum (Section~\ref{sec:fm}). It disappears, however, in the broad universe UALL ($t=0.29$),
+which adds the least liquid shares.
+
+\citet{medhat2022short} show that the one-month reversal in the United States is confined to low-turnover stocks,
+while high-turnover stocks display short-term momentum. In an exploratory analysis (Table~\ref{tab:str}, panel A) I sort
+UALL into turnover terciles and, within each, form quintiles on the past month's return. Among low-turnover shares last
+month's winners underperform ($\val{STRlowM}$\%, $t=\val{STRlowT}$), among high-turnover shares they outperform
+(\val{STRhighM}\%, $t=\val{STRhighT}$), and the difference, \val{STRdiffM}\% a month, is significant
+($t=\val{STRdiffT}$), although neither tercile is significant on its own. Turnover does not explain the continuation in
+U100, however. Only about half of U100 shares (\val{UhundTopTurn}\%) belong to the top turnover tercile of UALL, and
+within U100 continuation is strong in both the low-turnover half (\val{UhundLowTurnM}\%, $t=\val{UhundLowTurnT}$) and
+the high-turnover half (\val{UhundHighTurnM}\%, $t=\val{UhundHighTurnT}$), with an insignificant difference
+($t=\val{UhundDiffT}$; panel B). Continuation is thus a property of the liquid segment as a whole, and weak signs of
+the usual reversal appear only in the lowest turnover tercile of the broad cross-section. A continuation strategy in U100 turns over
+\val{ContTurnover} times its notional a month; net of the cost model of Section~\ref{sec:costs} it would still earn
+about \val{ContNetMean}\% a month ($t=\val{ContNetT}$) before price impact, which on the illustrative calculation of
+Section~\ref{sec:costs} would eliminate it at any meaningful size---a borderline and post hoc result.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Short-term returns by turnover (exploratory)}\label{tab:str}
+\input{tables/tab_str_turnover}
+\tabnote{Panel A: within UALL, shares are sorted each month into terciles of turnover (TURN) and, within each tercile,
+into quintiles of the month-$t$ return. Panel B: the same within U100, with turnover halves. The table reports the mean
+return in month $t+1$ of the top minus the bottom quintile (winners minus losers, \% per month) with Newey--West
+$t$-statistics. Positive values indicate continuation. Not part of the pre-analysis plan.}
+\end{table}
+
+\subsection{A Bayesian complement}\label{sec:eb}
+
+The empirical-Bayes model gives a much more permissive answer. The estimated prior has mean \val{EBmuzero}\% a month,
+a cluster dispersion $\tau_c=\val{EBtauc}$\% and an idiosyncratic dispersion of only $\tau_w=\val{EBtauw}$\%
+(Appendix Table~\ref{tab:eb}, Figure~\ref{fig:eb}). Thirteen of the 25 posterior intervals exclude zero on the positive
+side, a ``replication rate'' of \val{EBrate}\%. The composition of that set is revealing: it consists of every member of
+the momentum cluster and every member of the size-and-liquidity cluster, including the Amihud, zero-return and spread
+portfolios whose own means are negative. With $\tau_w$ close to zero the model pools almost completely within clusters,
+so the posterior answers whether the average premium of a theme is positive---for liquidity it is, because abnormal
+volume and the variability of trading value pull the cluster mean up---rather than whether a particular characteristic
+predicts returns. With the nine cluster labels used in one table of the plan, which separate downside risk from
+skewness and size from liquidity, the replicated set is \val{EBnineSame}. Without clusters (exploratory) the model
+declares \val{EBncPos} factors replicated, but a different set: it includes six portfolios whose own $t$-statistics are
+below 1.9 (idiosyncratic and total volatility, skewness, size, trading value and turnover) and excludes
+twelve-to-seven-month momentum ($t=\val{TMOM127}$); it ranks the 52-week high below skewness and shrinks the short-term
+reversal, with its $t$-statistic of $\val{TSTR}$, to a posterior mean close to zero. These results reflect strong
+shrinkage across factors whose estimation errors are almost collinear (the correlation is \val{CorrIvolTvol} between the
+idiosyncratic- and total-volatility portfolios and \val{CorrMomMom} between twelve-month and twelve-to-seven-month
+momentum). In both versions the posterior standard deviations (median \val{EBpostSDmed}\% with clusters) are well below
+the sampling standard errors of the means (median \val{OLSseMed}\%), as shrinkage implies, but because the
+hyperparameters are estimated from only 25 premia and then treated as known, these intervals understate the
+uncertainty. The Bayesian replication rate is therefore fragile in this setting, and it answers a different
+question from the frequentist ladder. For the question this paper asks---which specific predictors can be relied on in
+Russia---the dependence-robust frequentist rung is the more informative.
+
+\subsection{Robustness}\label{sec:robust}
+
+Table~\ref{tab:counts} reports the ladder for every specification in the grid, and Appendix Table~\ref{tab:robust_t}
+the $t$-statistics. The survivors are remarkably stable. Residual momentum survives \RW{} in every full-sample specification
+of Table~\ref{tab:counts}, including UALL; twelve-month momentum and the 52-week high in all except UALL; six-month
+momentum in all except value weights, U50 and UALL. Twelve-to-seven-month momentum survives with terciles, without
+preferred duplicates, for CAPM alphas and with the shortest bootstrap block. Abnormal volume, by contrast, is fragile: it fails in U50, in UALL, with the
+implementation lag, with price-only returns and with the longest bootstrap block. The failures with the implementation lag and with price-only returns suggest that part of its premium accrues at the very
+start of the holding month and part through dividends; I do not pursue this further. The variability of trading value survives only when the 2022 transition
+months are dropped.
+
+In UALL, which adds about 130 less liquid shares, the conventional rung admits ten characteristics---among them
+size ($t=2.45$), trading value ($t=3.11$), the zero-return proportion ($t=2.47$) and Amihud illiquidity
+($t=2.00$), so the classic small-and-illiquid premia appear once the least liquid shares are included---but the
+\RW{} critical value rises to 3.64 and only residual momentum survives: the illiquid tail adds noise faster than it
+adds signal. With value weights and in U50 the momentum core survives, although with fewer variants. Dropping the
+look-ahead in share counts leaves size and turnover insignificant. Excluding February and March 2022, the most extreme
+months of the sample, raises rather than lowers the count.
+
+\paragraph{Additional checks (exploratory).} Table~\ref{tab:revchecks} collects checks added after the first version of
+the paper, each run through the full ladder. Unobserved delisting losses do not create the momentum premia. Many
+terminal events are share exchanges or buyouts rather than losses, so a uniform delisting return is a stress test
+rather than an estimate. Charging $-30$\%, the value used for performance-related delistings in US data since
+\citet{shumway1997delisting}, $-50$\%, close to the $-55$\% that \citet{shumway1999delisting} estimate for Nasdaq, or
+$-100$\% once to every terminal event leaves the momentum core and abnormal volume significant. In
+\val{TermShortMoreWord} of the four momentum portfolios terminal events fall more often in the short leg (in the
+52-week-high portfolio, \val{TermHIGHlong} in the long and \val{TermHIGHshort} in the short leg), so assumed losses tend
+to raise their premia; residual momentum is the exception (\val{TermRESMOMlong} and \val{TermRESMOMshort}). The same
+holds more strongly for the variability of trading value, whose short leg contains \val{TermCVVALshort} of its
+\val{TermCVVALtot} terminal events; with losses of 100\% it also survives. A one-sided bound that charges $-100$\% to
+every terminal event in a long leg and nothing to those in a short leg, and a two-sided bound that adds a 50\% buyout
+premium to the events in short legs, keep all four momentum survivors, although in the two-sided case residual
+momentum only just clears the bar ($t=\val{AdvTwoTRESMOM}$ against a critical value of \val{AdvTwoCrit}); abnormal
+volume falls to $t=\val{AdvTABVOL}$ and $t=\val{AdvTwoTABVOL}$. Holding suspended shares until trading resumes changes
+nothing. In 2013 the price source takes the volumes of some large shares from a thinly traded board; setting their
+volume-based characteristics to missing for the affected months lowers the $t$-statistic of abnormal volume to
+\val{BoardTABVOL} and leaves the survivors unchanged (Appendix~\ref{app:data}). Removing the six depositary-receipt histories (up to
+\val{DRmaxWord} U100 shares a month from 2020) leaves the same five survivors. Re-estimating residual momentum and
+idiosyncratic volatility with a two-factor model---the market and a value-weighted small-minus-big factor built from
+all active shares, which inherits the look-ahead in share counts noted in Section~\ref{sec:data}---lowers the $t$-statistic of residual momentum from \val{TRESMOM} to \val{TwoFtRESMOM} and moves that
+of idiosyncratic volatility from \val{TIVOL} to \val{TwoFtIVOL}; the survivors are unchanged. Book equity, and hence
+a value factor, is not available.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Additional checks (exploratory)}\label{tab:revchecks}
+\resizebox{\linewidth}{!}{\input{tables/tab_revision_checks}}
+\tabnote{Newey--West $t$-statistics of the five baseline survivors and the \RW{} ladder in each specification. RW crit.:
+first-step \RW{} critical value; RW: number of \RW{} discoveries in the predicted direction; Other: discoveries other
+than the five survivors. The wrong-signed short-term reversal is a \RW{} rejection in every row. Terminal event: the
+share stops trading for good during the holding month, or does not trade in it at all and never trades again
+(predecessors in ISS ticker changes excluded); each event is charged once (Section~\ref{sec:returns}). Delisting return: compounded with the return to the last trade, or the whole holding-month return
+if the share did not trade. One-sided: $-100$\% in long legs, nothing in short legs; two-sided: $-100$\% in long legs
+and $+50$\% in short legs. Suspensions held: a share that does
+not trade in the holding month but resumes later earns its return to the first trade after resumption. Without
+receipts: U100 rebuilt without the six issuers with depositary-receipt histories. Two-factor: RESMOM and IVOL from
+regressions on the market and a size factor. Calibrated: the nominal level $\alpha^\ast$ at which the simulated
+family-wise error rate is at most 5\% in both designs of Section~\ref{sec:multiplicity}; $t$-statistics as in the
+baseline.}
+\end{table}
+
+\subsection{Before and after the 2022 lockout}
+
+Table~\ref{tab:regimes} and Figure~\ref{fig:regimes} compare the 122 months before March 2022 with the 55 months after.
+Four of the five momentum premia are smaller after the break, but all remain large and significant at
+conventional levels (the 52-week high earns \val{RegPostHIGH52}\% a month afterwards, $t=\val{RegTpostHIGH52}$). Short-term continuation
+persists. The clearest change is in the liquidity cluster: trading value, the zero-return proportion and Amihud
+illiquidity carry negative premia before 2022 and positive premia after (for trading value, $\val{RegPreDVOL}$\% versus
+\val{RegPostDVOL}\%, $t(\Delta)=\val{RegTdDVOL}$), and the low-beta premium rises from \val{RegPreBETA}\% to
+\val{RegPostBETA}\% a month. None of the 25 differences survives
+the Benjamini--Hochberg correction (the smallest adjusted $p$-value is \val{RegMinPdvol}), and no significant change is
+detected in the average premium of the 25 oriented factors either (\val{RegZooPre}\% before and \val{RegZooPost}\% after,
+$t(\Delta)=\val{RegZooT}$). H4 is therefore not supported. Absence of evidence is not evidence of no change, however.
+The 95\% confidence interval for the change in the average premium runs from $\val{RegZooLo}$ to \val{RegZooHi}
+percentage points a month, which includes changes as large as the average premium itself, and a change would have to be
+about \val{RegZooMDE} percentage points to be detected with 80\% probability. For the average of the four momentum
+survivors, whose premium falls from \val{RegMomPre}\% to \val{RegMomPost}\% a month, the interval runs from
+$\val{RegMomLo}$ to \val{RegMomHi} points (Table~\ref{tab:regimes} reports the interval for each factor). Within the
+regimes, the \RW{} test finds four survivors in the pre-break sample (the momentum core) and none in the post-break
+sample, where with 55 months the critical value rises to \val{RWcritPost}; eight characteristics nonetheless clear
+$t>1.96$ after the break.
+
+The comparison is also not a clean experiment. February and March 2022 brought the exit of foreign investors together
+with sanctions, an emergency increase in the key rate to 20\% \citep{cbr2022keyrate}, a ban on short sales
+\citep{cbr2022shortban}, dividend cancellations by several large issuers and a market dominated by individual
+investors; a before-and-after contrast cannot attribute a change, or its absence, to any one of these. The evidence is
+consistent with an unchanged average premium, but the post-break sample is too short to rule out economically large
+changes in either direction.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Premia before and after the 2022 lockout}\label{tab:regimes}
+\resizebox{0.9\linewidth}{!}{\input{tables/tab_regimes}}
+\tabnote{Mean oriented long--short returns (\% per month) and Newey--West $t$-statistics in the two regimes. $\Delta$:
+coefficient on a post-2022 dummy in a regression of the monthly return on a constant and the dummy (Newey--West,
+$L=4$); $p_{\text{BH}}$: Benjamini--Hochberg adjusted $p$-value across the 25 differences; 95\% CI: $\Delta$ plus or minus
+1.96 Newey--West standard errors. Average of 25: equal-weighted average of the 25 oriented factors.}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.55\linewidth]{figures/fig_regimes.pdf}
+\caption{$t$-statistics of the 25 oriented long--short portfolios before (2012:01--2022:02) and after (2022:03--2026:09)
+the exclusion of foreign investors, coloured by cluster. The diagonal marks equal $t$-statistics.}\label{fig:regimes}
+\end{figure}
+
+\subsection{Trading costs and implementability}\label{sec:costs}
+
+Table~\ref{tab:costs} charges each trade one half of the \citet{abdi2017simple} close--high--low spread estimate for the
+formation month plus 5 basis points of fees, and computes turnover from drifted weights. The resulting one-way cost
+averages 35 to 40 basis points; the estimate is crude, and it ignores price impact. Momentum portfolios turn over
+about one to one and a half times their notional a month (summing both legs), so the cost drag is 0.4 to 0.6
+percentage points a month. I treat H5 as supported when the net mean is significantly positive at the 5\% level. All four momentum
+survivors remain significant net of costs, so H5 holds for them under this cost model: the
+52-week high ($t=\val{NetTHIGH52}$), six-month momentum ($t=\val{NetTMOM61}$), twelve-month momentum
+($t=\val{NetTMOM121}$) and residual momentum ($t=\val{NetTRESMOM}$). They also survive an exploratory \RW{} test on net
+returns, and they remain significant at conventional levels when costs are doubled. Their break-even one-way costs are
+\val{BEHIGH52}, \val{BEMOM61}, \val{BEMOM121} and \val{BERESMOM} basis points, respectively. Abnormal volume, which
+turns over about twice its notional a month, does not survive costs: its net mean, \val{NetMeanABVOL}\% a month, is
+positive but insignificant ($t=\val{NetTABVOL}$), so H5 is not supported for it.
+
+\paragraph{Implementability (exploratory).} The cost model covers spreads and fees only. Table~\ref{tab:implement}
+examines what it leaves out: the availability and cost of short positions, the 2022 short-sale ban and price impact;
+margin requirements and the financing of net positions are not modelled.
+Historical data on which shares could be borrowed and at what fee are not available, so the table relies on proxies and
+break-even values. Between \val{ImpShareMin} and \val{ImpShareMax}\% of each momentum premium comes from the long leg
+(panel A): measured against the equal-weighted return of all sorted shares, the long leg of the 52-week-high portfolio
+earns \val{ImpLongHIGH}\% a month ($t=\val{ImpLongTHIGH}$) and its short leg \val{ImpShortHIGH}\%
+($t=\val{ImpShortTHIGH}$), a split close to the one \citet{israel2013role} report for US momentum. Restricting the short
+leg to the 50 most liquid shares, or, from January 2013, the first holding month with an index base in force, to
+constituents of the MOEX Russia index---rough proxies for the lists of shares that brokers allow clients to sell short---keeps all four momentum premia
+significant net of spread costs ($t$ between \val{UfiftyTmin} and \val{UfiftyTmax}, and between \val{IdxTmin} and
+\val{IdxTmax}). Replacing the short legs by cash
+in the four months whose short positions would have been opened while short sales were banned, from 24 February to
+31 May 2022 \citep{cbr2022shortban}, changes little. A borrow fee on
+the short leg would have to exceed \val{BEfeeMin}--\val{BEfeeMax}\% a year to eliminate the net momentum premia; at
+10\% a year the 52-week high and twelve-month momentum remain significant, six-month momentum is borderline and residual
+momentum is not. Abnormal volume and short-term continuation, whose net premia are small to begin with, do not
+survive a borrow fee of 10\% a year.
+
+Price impact is the binding constraint. Under the square-root rule of thumb, in which a trade of $Q$ roubles in a share
+with daily trading value $V$ and daily volatility $\sigma$ costs about $Y\sigma\sqrt{Q/V}$ with $Y$ of order one
+\citep{toth2011anomalous}, the net premia of the equal-weighted momentum portfolios vanish at between \val{CapFullMin}
+and \val{CapFullMax} million roubles per leg over the full sample with $Y=1$, and at between \val{CapHalfMin} and
+\val{CapHalfMax} million with $Y=0.5$ (panel B). Most of the constraint comes from the early years. In 2012--2015 the
+median U100 share traded about \val{ADVearlyMin}--\val{ADVearlyMax} million roubles a day and in 2023--2026
+\val{ADVlateMin}--\val{ADVlateMax} million; over 2022--2026 the break-even sizes rise to between \val{CapPostMin}
+million and \val{CapPostMax} billion roubles per leg with $Y=1$. These calculations are illustrative---the impact
+coefficient is not estimated for MOEX, and each trade is assumed to be executed within a day---but they show that the
+gross premia of equal-weighted portfolios overstate what an investor of meaningful size could have earned.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Implementability of the survivors (exploratory)}\label{tab:implement}
+\resizebox{\linewidth}{!}{\input{tables/tab_implement_a}}\par\medskip
+\resizebox{\linewidth}{!}{\input{tables/tab_implement_b}}
+\tabnote{Monthly means in \% with Newey--West $t$-statistics in parentheses, 2012:01--2026:09 unless stated. Panel A:
+long (short) leg: return of the long leg minus (of all sorted shares minus the short leg), gross of costs, against the
+equal-weighted return of all shares in the sort. Net: after the spread-based cost model of Section~\ref{sec:costs}.
+Break-even fee: annual borrow fee on the short leg that sets the mean net return to zero. 2022 ban: short legs replaced
+by cash in the holding months March--June 2022, whose portfolios are formed at the closes of February to May. U50, Index: the short leg holds only those shares of the short quintile
+that are among the 50 most liquid, or in the MOEX Russia index base in force at the formation date; if no share of the short quintile is
+eligible, the short leg holds all eligible shares in the sort. $^{\ddagger}$Holding months 2013:01--2026:09: the first base takes
+effect in December 2012 and none is backfilled; over the same months the unrestricted net returns of the four momentum
+portfolios have $t$ between \val{IdxWinTmin} and \val{IdxWinTmax}. Panel B: net return after
+spread costs and a square-root impact charge $Y\sigma_i\sqrt{Q_i/V_i}$ per unit traded, where $Q_i$ is the rouble
+amount traded, $V_i$ the mean daily trading value and $\sigma_i$ the daily volatility of share $i$ in the formation
+month, with $Y=1$ unless stated. When fewer than 15 daily returns are available (as in the formation month March 2022),
+$\sigma_i$ is the s.d.\ of at least five daily returns of the month, or else the share's value for the previous month. Because the charge is proportional to $Y\sqrt{A}$ for a
+position of $A$ roubles per leg, the break-even size is $A^\ast=(\bar n/\bar c)^2$, where $\bar n$ is the mean net return
+before impact and $\bar c$ the mean impact charge per unit of $\sqrt{A}$. 2022--26: holding months 2022:03--2026:09. STR$^{\dagger}$: the short-term continuation strategy (winners minus
+losers of month $t$).}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Trading costs}\label{tab:costs}
+\resizebox{\linewidth}{!}{\input{tables/tab_costs}}
+\tabnote{Gross mean, net means and costs in \% per month. Turnover: average monthly sum over both legs of
+$|w_{\text{new}}-w_{\text{drifted}}|$. One-way cost per share-month: half of the \citet{abdi2017simple} spread estimate
+for the formation month plus 5 bp (cross-sectional median if unavailable). Break-even: one-way cost in basis points that
+sets the mean net return to zero; ``--'' for negative gross means. RW net: discovery under the \RW{} rung for net
+returns (exploratory). Newey--West $t$-statistics.}
+\end{table}
+
+\subsection{Fama--MacBeth regressions}\label{sec:fm}
+
+Table~\ref{tab:fm} reports monthly cross-sectional regressions of next-month returns on cross-sectional ranks scaled to
+$[-0.5,0.5]$ and oriented, so that a slope is the return spread between the highest- and lowest-ranked share
+\citep{fama1973risk}. Univariate slopes reproduce the portfolio sorts (the 52-week high has $t=\val{FMtHIGHuni}$). When
+all 25 ranks enter jointly, as the plan prescribes, no slope is significant (the largest $|t|$ is \val{FMmaxTmulti}):
+the five momentum signals are collinear and share their explanatory power. Two exploratory specifications illustrate
+this. With one canonical characteristic per cluster, twelve-month momentum ($t=\val{FMtMOMA}$) and short-term
+continuation ($t=\val{FMtSTRA}$) are the only significant predictors. With the \RW{} survivors and short-term
+continuation together, twelve-month momentum keeps $t=\val{FMtMOMB}$, the 52-week high $t=\val{FMtHIGHB}$ and
+continuation $t=\val{FMtSTRB}$, while abnormal volume falls to $t=\val{FMtABVOLB}$. The momentum survivors are therefore
+best read as heavily overlapping measurements of trend; abnormal volume partly overlaps with short-term continuation.
+
+The time series of the portfolio returns agree (exploratory). The four momentum survivors have pairwise correlations
+between \val{SurvCorrMin} and \val{SurvCorrMax}, and the first principal component of their correlation matrix accounts
+for \val{SurvEigShare}\% of the total. Regressed on the other three, six-month momentum ($t(\alpha)=\val{SpanTMOM61}$)
+and twelve-month momentum ($t(\alpha)=\val{SpanTMOM121}$) are spanned, while the 52-week high
+($t(\alpha)=\val{SpanTHIGH52}$) and residual momentum ($t(\alpha)=\val{SpanTRESMOM}$) keep alphas that are significant
+only at the conventional level. An equal-weighted composite of the four earns \val{CompMean}\% a month
+($t=\val{CompT}$). Regressed on the 52-week high and residual momentum alone, six- and
+twelve-month momentum have $t(\alpha)=\val{SpanTwoTMOM61}$ and $\val{SpanTwoTMOM121}$. Abnormal volume is nearly
+uncorrelated with the momentum survivors (correlations of \val{SurvCorrAbvolMax} or less), and its alpha against them
+has $t=\val{SpanTABVOL}$. These tests do not establish the exact number of distinct
+effects, since an insignificant incremental alpha is also what weak power would produce, but they show that the four
+survivors are largely redundant: the robust evidence is one momentum family, plus a fragile high-volume premium.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Fama--MacBeth regressions}\label{tab:fm}
+\resizebox{\linewidth}{!}{\input{tables/tab_fm}}
+\tabnote{Monthly cross-sectional OLS regressions in U100 of the month-$t+1$ return on cross-sectional ranks of the
+characteristics scaled to $[-0.5,0.5]$ and oriented by the predicted sign; missing ranks are set to zero in the
+multivariate regressions. Time-series averages of the slopes in \% per month with Newey--West $t$-statistics ($L=4$).
+Univariate and ``All 25 jointly'' are pre-specified; columns marked $^\ast$ are exploratory.}
+\end{table}
+
+\subsection{Statistical power}
+
+How much could fifteen years of Russian data reveal? I simulate samples of 177 months by resampling the demeaned
+25-factor return matrix with the stationary bootstrap, which preserves the dependence and the tails, and inject a true
+premium into one factor at a time. Table~\ref{tab:power} and Figure~\ref{fig:power} report the probability that the
+injected factor is discovered, averaged over the 25 factors. A factor with an annual Sharpe ratio of 0.5 clears
+$t>1.96$ about half the time but survives \RW{} with probability of only \val{PowRWsr0p5}; at 0.75 the \RW{} power is
+\val{PowRWsr0p75}; at 1.0, \val{PowRWsr1p0}; and only at 1.25 does it exceed 0.9. The survivors have Sharpe ratios of
+\val{SRsurvMin} to \val{SRsurvMax}, within the detectable range, although abnormal volume lies near its lower edge.
+Many anomalies documented in the United States have long--short Sharpe ratios well below one, and the non-surviving
+low-risk, size, liquidity and skewness portfolios here have Sharpe ratios between roughly $-0.4$ and $0.6$. Even the
+conventional test detects a premium with a Sharpe ratio of 0.75 with probability \val{PowTsr0p75}. Premia that large
+are therefore unlikely for the factors whose estimated Sharpe ratios are near or below zero, but not for the low-risk,
+skewness and turnover portfolios, whose $t$-statistics lie between 1.4 and 1.9; and premia with Sharpe ratios of 0.5 or
+less cannot be ruled out for any non-replicated factor. Their failure to replicate on MOEX is weak evidence against their
+existence.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Power of the ladder}\label{tab:power}
+\input{tables/tab_power}
+\tabnote{Probability that a single factor with the given true annualised Sharpe ratio is discovered (correct sign) when the
+other 24 factors have zero premia. Samples of 177 months are drawn with the stationary bootstrap (mean block 6) from the
+demeaned baseline factor returns; 300 outer resamples, each with 499 inner resamples for \RW{}; averages over the 25
+factors.}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.6\linewidth]{figures/fig_power.pdf}
+\caption{Probability of discovering one true factor as a function of its annualised Sharpe ratio, by rung.}\label{fig:power}
+\end{figure}
+
+% =====================================================================================
+\section{Discussion}\label{sec:discussion}
+
+\paragraph{What survives on MOEX.} The evidence supports one robust anomaly family: intermediate-horizon price momentum,
+measured by past six- and twelve-month returns, residual returns or nearness to the 52-week high. These are largely
+redundant measurements of one family, not four discoveries. The premia are large (Sharpe
+ratios above one), survive the most demanding correction in nearly every full-sample variation of the protocol
+(residual momentum in all of them), a size-calibrated version of that correction, bounds for unobserved delisting
+losses, spread-based trading costs and restrictions of the short leg to liquid or index shares, and remain positive and
+significant at conventional levels after 2022, although in the 55-month post-break sample no factor clears the \RW{}
+bar. Their capacity in equal-weighted form is small, so the premia are better read as evidence about price formation
+than as a measure of what a large investor could earn. Short-term continuation
+among liquid shares is a second, less robust regularity: it passes the \RW{} test in eight of the eleven full-sample
+specifications (not with value weights, in U50 or in UALL), and its net-of-cost return is borderline. Their cumulative returns (Figure~\ref{fig:cumret}) rise steadily except for a sharp momentum crash in February
+2015, when the losers of the 2014 rouble crisis rebounded and twelve-month momentum lost \val{WorstAbsMOM121}\% in a month,
+an episode of the kind described by \citet{daniel2016momentum}. The finding contrasts with the absence of momentum in
+Eastern Europe over 1990--2011 reported by \citet{cakici2013size} and with the contrarian profits at longer horizons in
+\citet{teplova2014momentum}, and it agrees with the significant momentum premium of \citet{ovechkin2022econometric} and
+the after-cost momentum profits of \citet{nazarova2023momentum}. A market dominated by individual investors, with
+short sales restricted at times of stress and episodic sanctions shocks, is a natural place for slow information
+diffusion and under-reaction to persist.
+
+\paragraph{What does not survive.} The implemented low-risk, size, liquidity, skewness, seasonality, long-term reversal
+and dividend-yield signals do not survive in the liquid universe. For liquidity this matches \citet{teplova2022implicit}
+and \citet{gurov2023illiquidity}, who find little cross-sectional evidence of an illiquidity premium on MOEX; for size it
+matches \citet{ovechkin2022econometric}. Three qualifications limit what this means. The conclusion concerns these
+implementations, which differ from several source definitions (Appendix Table~\ref{tab:adapt}); it concerns the 100 most
+liquid shares, and the classic size and illiquidity premia do appear at the conventional level once the least liquid
+shares are included (UALL); and it concerns a fifteen-year sample in which premia with Sharpe ratios of 0.5 or less would
+be detected at most about half the time by the conventional test and rarely by the robust one. A failure to survive is
+therefore weak evidence that an anomaly is absent from the Russian market.
+
+\paragraph{Implications for empirical work on Russia and other emerging markets.} First, in samples of fifteen years
+or less the familiar $t>3$ hurdle is not conservative enough: autocorrelation-robust $t$-statistics are more dispersed
+than the normal distribution, and the bootstrap \RW{} critical value ranges from 3.3 to 3.6 across specifications and
+approaches 4 in a 55-month subsample. Researchers working with short emerging-market histories should use bootstrap
+critical values for the studentised statistics rather than normal $p$-values, and should check the size of the
+bootstrap test by simulation, because even it is somewhat liberal at these sample lengths. Second, the closed-form Deflated Sharpe
+Ratio should not be applied to a zoo of heterogeneous factors with the cross-factor variance of Sharpe ratios as its
+benchmark; a bootstrap null benchmark gives sensible answers. Third, survivorship matters: about a third of the
+shares that were ever among the 100 most liquid are no longer listed, and even a source that includes delisted shares can miss
+delisted instruments of another type, as the depositary receipts missing here show. Fourth, Bayesian and frequentist replication
+rates answer different questions; reporting both, as here, makes the difference explicit.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_cumret.pdf}
+\caption{Cumulative log returns of the five \RW{} survivors and of short-term continuation (the negative of the
+reversal portfolio), baseline specification, 2012:01--2026:09. The dotted line marks the February 2022
+suspension.}\label{fig:cumret}
+\end{figure}
+
+\paragraph{Limitations.} The study covers only characteristics that can be built from market data and dividends; the
+value, profitability, investment and accrual families, which carry much of the US evidence, require accounting data
+that are not available in open sources for the full cross-section including delisted firms. Market capitalisation is
+point-in-time only for index constituents. Dividend coverage is thinner in the early years---the number of
+dividend-paying securities recorded rises from 76 in 2010 to at least 100 in every year from 2011---which affects
+only the formation windows of the longest-horizon characteristics in the first months; the momentum core survives
+with price-only returns, so it does not hinge on dividends. Depositary receipts are covered only in part
+(Section~\ref{sec:sources}). The final payoffs of delisted shares are not observed and are bounded rather than measured.
+Historical data on which shares could be sold short and at what fee are not available, so the implementability
+analysis relies on proxies; it does not model margin requirements or the financing of net positions, and its
+price-impact calculation uses a rule of thumb rather than estimates for MOEX. And
+the post-2022 sample is short.
+
+% =====================================================================================
+\section{Conclusion}\label{sec:conclusion}
+
+A pre-specified test of 25 anomalies on fifteen years of Moscow Exchange share data free of survivorship bias finds
+that
+intermediate-horizon price momentum is the only anomaly family that survives a dependence-robust bootstrap correction
+for multiple testing, nearly every variation of the protocol, bounds for unobserved delisting losses and spread-based
+trading costs; its four surviving measures are largely redundant, and it remains significant at
+conventional levels after the 2022 exclusion of foreign investors. Liquid Russian shares also exhibit short-term
+continuation rather than reversal. The implemented low-risk, size, liquidity, skewness, seasonality and payout signals
+do not survive, but the sample cannot reliably detect premia with Sharpe ratios much below one, so this is weak
+evidence that those anomalies are absent. Methodologically, the Russian evidence shows that with fifteen years of
+monthly data the bootstrap stepdown bar is higher than the familiar $t>3$ rule, because autocorrelation-robust
+$t$-statistics are more dispersed than the normal distribution; corrections based on normal $p$-values therefore
+overstate significance in samples of this length, and even the bootstrap test is somewhat liberal. Extending the zoo
+to accounting-based characteristics, measuring short-sale costs and price impact on MOEX directly, and revisiting the
+post-2022 regime as its sample lengthens are natural next steps.
+
+\section*{Data availability}
+All data are public. The replication package is available at \url{https://github.com/Sergpreneur/moex-factor-zoo}
+(release v1.0). It contains the pre-analysis plan with its hash, timestamp and version history, the list of
+deviations, the code that rebuilds every number, table and figure from the raw data, the monthly factor return series
+(also as CSV files), the tests, and a provenance record of the data sources with their commit hashes; the raw data are
+downloaded from their public sources by a script.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the writing process}
+During the preparation of this work the author used Claude (Anthropic) to assist with code development, data processing
+and drafting of the manuscript. The author reviewed and edited the content as needed and takes full responsibility for
+the content of the publication.
+
+\section*{Acknowledgements}
+I thank the maintainers of the public MOEX data mirrors used in this study, in particular S.~Andreev for the
+\texttt{moex-momentum} collection released under the MIT licence.
+
+\FloatBarrier
+\clearpage
+\bibliographystyle{apalike}
+\setstretch{1.0}
+{\sloppy
+\bibliography{references}}
+
+\setstretch{1.25}
+\appendix
+\clearpage
+\section{Deviations from the pre-analysis plan}\label{app:deviations}
+
+\textbf{Implementation details not spelled out in the plan (decided before the factor results were seen).}
+(i) When the Abdi--Ranaldo spread cannot be estimated for a share-month, its cost is set to the month's
+cross-sectional median cost (50 basis points if no estimate exists). (ii) Abnormal volume requires at least six listed
+months in the comparison window; all universes already require twelve months of trading, so the condition never binds.
+(iii) The CAPM-alpha variant runs the ladder on market-hedged returns $r_{k,t}-\hat\beta_k(r_{m,t}-r_{f,t})$ with
+$\hat\beta_k$ estimated once on the full sample; the bootstrap therefore ignores sampling error in $\hat\beta_k$.
+(iv) Daily returns across gaps of more than 14 calendar days (the 2022 suspension) are excluded from daily statistics
+for the market index as well as for shares. (v) The plan's characteristic table labels nine clusters, splitting downside
+risk from skewness and size from liquidity, while its description of the empirical-Bayes model specifies seven; the
+model uses seven, and the nine-label version gives the same replicated set (Section~\ref{sec:eb}).
+
+\textbf{Changes made after the results were seen.} (vi) Bug fix: the MCFTRR series used here has no
+print on 24 March 2022, so the daily market return on 25 March 2022 was first computed against the last pre-suspension
+print, contrary to the 14-day rule.
+It is now computed against the previous actual print and set to missing when the gap exceeds 14 days. The fix changes
+the characteristics that use daily market returns (mainly beta, idiosyncratic skewness and co-skewness) in a few months;
+it moves their baseline $t$-statistics by less than 0.05, and by at most 0.06 in any variant, and changes no discovery
+count in any specification. (vii) The power study uses 300 common outer
+resamples shared across the 25 factors and six Sharpe-ratio levels, with the inner \RW{} bootstrap computed once per
+outer resample, instead of 100 independent outer replications per factor and level. Because the centred bootstrap
+statistics are invariant to the injected drift, this changes the precision of the simulation, not its estimand.
+
+\textbf{Exploratory analyses added after the results were seen.} (viii) The Deflated Sharpe Ratio with a bootstrap
+null benchmark. (ix) Short-term returns within turnover terciles of UALL and turnover halves of U100
+(Table~\ref{tab:str}). (x) The empirical-Bayes model without clusters and with nine clusters. (xi) Full ladders within
+each regime. (xii) Two parsimonious Fama--MacBeth specifications (Table~\ref{tab:fm}). (xiii) The net-of-cost return of a
+short-term continuation strategy and the \RW{} ladder on net returns. (xiv) The decomposition of the \RW{} critical
+value in Section~\ref{sec:multiplicity} (Gaussian and i.i.d.\ Newey--West benchmarks with and without the factors'
+correlation matrix, longer HAC lags, normal scores, rescaled bootstrap statistics, other seeds)
+and the simulation of family-wise error control in Appendix~\ref{app:data}. (xv) Details of the PBO splits.
+
+\textbf{Exploratory analyses added in the revision, after comments on the first version.} (xvi) Bounds for unobserved
+delisting returns and a hold-to-resumption treatment of suspended shares (Section~\ref{sec:robust}). (xvii) U100 rebuilt
+without the six depositary-receipt histories. (xviii) Residual momentum and idiosyncratic volatility with a
+market-plus-SMB model. (xix) Long- and short-leg returns, break-even borrow fees, the 2022 short-sale ban, short legs
+restricted to U50 or to index constituents, and an illustrative square-root price-impact charge
+(Section~\ref{sec:costs}). (xx) Confidence intervals and minimum detectable changes for the regime differences, and the
+regime comparison for the average of the momentum survivors. (xxi) Correlations and spanning regressions among the
+survivors (Section~\ref{sec:fm}). (xxii) The simulation of family-wise error rates was enlarged from 1{,}000 to
+\val{FWreps} replications per design and extended to Holm and the $t>3$ rule (the first version reported 6.2\% and
+6.5\% for the \RW{} rung), and a size-calibrated \RW{} level was added (Section~\ref{sec:multiplicity}). (xxiii) A discrepancy with the plan, found in the revision: the plan states that depositary receipts are not in the
+source and are therefore excluded, but six receipt histories are in the data and in the baseline universe
+(\val{DRstockMonths} U100 stock-months from 2020). The baseline is kept as estimated; the universe that conforms to the
+plan, without these six issuers, gives the same five survivors (Table~\ref{tab:revchecks}). The first version repeated
+the plan's statement and described each characteristic as defined as in its source; Section~\ref{sec:sources} and
+Table~\ref{tab:adapt} correct both. (xxiv) Added in a second revision: four data-construction sensitivities that
+rebuild the panels from the raw data (a corrected dividend calendar; same-date payments treated as possible
+duplicates; the dates of the Yahoo-derived dividend source moved two sessions earlier or later; Appendix~\ref{app:data}),
+and a check of the volume-based characteristics for the shares that the price source takes from the T+2 board in 2013,
+implemented in a separate module, so that the configuration and data-construction modules hashed at the freeze are
+unchanged; look-ahead tests for universe membership and cost estimates and a continuity test of share counts through
+splits; and the index-restricted short leg of Section~\ref{sec:costs} is now evaluated only from January 2013, the
+first holding month with an index base in force (the first revision used the December 2012 base for earlier months).
+None of these changes alters a pre-specified result.
+
+Apart from item (xxiii), no characteristic, sign, window, universe, breakpoint, weighting scheme or sample period
+differs from the plan.
+
+\section{Data construction}\label{app:data}
+
+\textbf{Sources and provenance.} Raw daily ISS share prices, the ticker dictionary including delisted securities,
+dividends, splits
+and MCFTRR are taken from the \texttt{moex-momentum} repository \citep{andreev2026moexmomentum} at commit
+\texttt{240a69d}; MOEX index calculation bases and the key-rate history from the \texttt{moexutils} repository
+\citep{moexutils} at commit \texttt{9742060}; the current MOEX list of securities from the \texttt{moex-dataset}
+repository at commit \texttt{3320b44}. Prices in the first source are collected from every board on which a security
+traded, with the main post-2013 board (TQBR) taking precedence over the legacy boards, which take precedence over the
+odd-lot board. Dividends are collected from MOEX ISS and several secondary sources, reconciled, and checked for
+completeness against MOEX's export of register-closing dates.
+
+\textbf{Sessions.} The session calendar is the union of the dates on which MCFTRR is published and the dates on which at
+least 20 shares traded (which adds official working Saturdays). Rows with non-positive closes or zero volume are
+treated as days without trades.
+
+\textbf{Dividends.} A share's payments with the same record date are summed. The data contain \val{DivGroupsAll}
+such groups (\val{DivGroupsPairsAll} pairs and \val{DivGroupsTriples} triples); \val{DivPairs} of them, all pairs,
+belong to shares that were ever in U100. Many are a final and an interim dividend declared together, as NLMK and
+Severstal regularly do. I checked eight of the U100 pairs against issuer disclosures or press reports (NLMK
+2015--2018, Severstal 2020, PIK and Inarctica 2021, Henderson 2024); all are distinct payments for different periods.
+Treating every group as a possible duplicate and keeping only its largest payment (an exploratory sensitivity, built on
+the corrected ex-date rule described below) drops \val{DedupDropped} payments, \val{DedupDroppedU} of them for shares
+that were ever in U100. Relative to the corrected rule alone it changes \val{DedupOnlyChanged} U100 holding-month
+returns and no $t$-statistic by more than \val{DedupOnlyMaxDt}; relative to the baseline, \val{DedupChanged} returns
+change, no $t$-statistic moves by more than \val{DedupMaxDt}, and the \RW{} survivors are unchanged.
+
+The plan's ex-date rule has two approximations. It locates the ex-date on the share's own trading days, so when a share
+does not trade around the record date the payout can be credited a few sessions early, in three U100 cases in the
+previous month. And it applies T0 settlement until September 2013, although from 25 March 2013 the source takes the prices of
+some of the largest shares, such as Sberbank and LUKOIL, from the T+2 board (TQBR); four U100 payouts are therefore
+placed two sessions late, within the same month. A corrected rule (exploratory) locates the ex-date on the exchange
+calendar, reads the settlement regime from the board on which the share traded, and credits the payout on the first own
+trading day on or after the ex-date. It changes \val{DivcalChanged} U100 holding-month returns, leaves the survivors
+unchanged and moves no baseline $t$-statistic by more than \val{DivcalMaxDt}.
+
+The Yahoo-derived source stores ex-dates whose convention is not uniform before September 2013. For Sberbank it gives
+11 April 2012, the session before the record date of 12 April, and 12 April 2013, the session after the record date
+of 11 April; under the settlement regimes of the boards that supply the prices, the ex-dates were 13 April 2012 (T0)
+and 10 April 2013 (T+2). Both rules take the stored date as the ex-date. Moving every date of this source two sessions
+earlier (an exploratory sensitivity) changes \val{YahooEarlyChanged} U100 holding-month returns, and moving every date
+two sessions later changes \val{YahooLateChanged}: most only slightly, through the price at which the payout is
+reinvested, and a few by moving a large payout into the adjacent month. In both cases the number of discoveries at every
+rung of the ladder and the survivors are unchanged, and the survivors' $t$-statistics move by at most
+\val{YahooMaxDtSurv}; the largest change, \val{YahooMaxDt}, is for \val{YahooMaxDtId}, whose baseline $t$-statistic is
+$\val{YahooMaxDtBaseT}$. Each of the four data sensitivities rebuilds the panels, characteristics and baseline
+portfolios from the raw data in separate folders and reruns the ladder (\texttt{scripts/09\_run\_data\_sensitivities.sh};
+definitions in \texttt{moexzoo/variants.py}).
+
+\textbf{Trading volume in 2013.} The board switch noted above also affects volumes: from 25 March 2013 the source takes
+the daily rows of some large shares, volumes included, from the T+2 board, which carried a small part of their trading
+until the main board moved to T+2 on 2 September 2013. The recorded trading value of Sberbank, LUKOIL and VTB in
+April--August 2013 is \val{BoardValLo} to \val{BoardValHi}\% of its level in the first quarter, against
+\val{BoardCtlLo} to \val{BoardCtlHi}\% for Gazprom and Norilsk Nickel, which remain on the legacy board.
+In all, \val{BoardN} shares have rows from a T+ board in that window. Their volume-based characteristics are understated in 2013, and abnormal volume, which compares a month
+with the preceding twelve, is distorted until August 2014. Setting the seven volume- and trading-based characteristics
+(abnormal volume, turnover, trading value, Amihud illiquidity, the variability of trading value, the zero-return
+proportion and the spread) of these shares to missing for formation months 2013:03--2014:08 (\val{BoardStockMonths}
+U100 stock-months; an exploratory sensitivity, \texttt{scripts/05h\_board\_volume.py}) lowers the $t$-statistic of
+abnormal volume from \val{TABVOL} to \val{BoardTABVOL} and raises its \RW{} adjusted $p$-value from \val{PrwABVOL} to
+\val{BoardPrwABVOL}; the number of discoveries at every rung and the survivors are unchanged, and no $t$-statistic
+moves by more than \val{BoardMaxDt}. Universe membership uses the median trading value over twelve months, which damps
+the effect: Sberbank, LUKOIL, VTB and RusHydro stay in U100 throughout.
+
+\textbf{Ticker changes.} ISS records ticker changes (for example, TCSG to T); the predecessor's history is stitched into
+the successor's file, so the universe keeps only one of the two in any month. Redomiciliations create new securities
+with separate histories (for example, YNDX to YDEX). Where the predecessor was a depositary receipt with a different
+ticker (for example, FIVE to X5 or HHRU to HEAD), only the successor is in the data (Section~\ref{sec:sources}).
+
+\textbf{Integrity tests.} The replication package contains tests that (i) perturb prices, dividends, trading data and
+market returns after a formation month at four dates and verify that no characteristic changes; (ii) verify the continuity of adjusted prices around the 1:100
+split of Norilsk Nickel (2024), the 5000:1 reverse split of VTB (2024) and the 1:100 split of Transneft preferred shares
+(2024); (iii) verify the placement and amount of a Sberbank dividend on its ex-date; (iv) verify the alignment of
+holding-period returns; (v) compare the Newey--West estimator and the Holm, Benjamini--Hochberg and Benjamini--Yekutieli
+procedures with \texttt{statsmodels}; (vi) check the \RW{} implementation under a global null; (vii) perturb the trading
+data after a formation month (monthly trading value, trading days and last-trade dates; daily prices) and verify that
+universe membership and trading-cost estimates do not change; (viii) verify that adjusted share counts, and hence
+capitalisations, are continuous through all \val{NsplitEvents} splits that fall in the monthly panel, and that no
+adjusted share count changes by more than a factor of three from one month to the next (the continuity check is
+informative for the \val{NsplitPit} splits with point-in-time index-base share counts on both sides; for the others the
+fallback count does not change across the split); and (ix) verify that the module of data-construction sensitivities
+reproduces the frozen adjustment exactly when given the plan's dividend rule. Tests (vii)--(ix) were added in the
+second revision. A separate
+simulation (\val{FWreps} replications in each of two designs, $B=499$ inner resamples; exploratory) estimates the
+family-wise error rates of the \RW{} rung, Holm and the $t>3$ rule under the global null. For a multivariate-$t$
+process with five degrees of freedom, AR(1) coefficient 0.1 and the empirical correlation matrix of the factors they are
+\val{FWrwPar}\%, \val{FWholmPar}\% and \val{FWtthreePar}\%; for a stationary bootstrap of the demeaned factor returns,
+\val{FWrwBoot}\%, \val{FWholmBoot}\% and \val{FWtthreeBoot}\%, against a nominal 5\% (Wilson 95\% intervals in
+Section~\ref{sec:multiplicity}). The bootstrap test is mildly liberal at this sample length and the normal-theory
+procedures more so. Under the global null a family-wise error occurs exactly when the first-step bootstrap $p$-value
+of the largest $|t|$ is at or below the nominal level, so the simulated rate can be computed for any level. The
+calibrated level is the largest attainable level at which the simulated rate does not exceed 5\%:
+\val{FWalphaPar} in the parametric design and \val{FWalphaBoot} in the bootstrap design; the smaller is used.
+
+\section{Additional results}\label{app:additional}
+
+\begin{table}[H]
+\centering\footnotesize
+\setstretch{1.0}
+\caption{Implementation relative to the source definitions}\label{tab:adapt}
+\begin{tabularx}{\linewidth}{@{}l>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+ID & Source & Source definition & Implementation here \\
+\midrule
+MOM12\_1 & \citet{jegadeesh1993returns} & Past 3--12-month returns; overlapping holding periods of 3--12 months & Months $t-11$ to $t-1$ (month $t$ skipped) \\
+MOM6\_1 & \citet{jegadeesh1993returns} & As above, six-month formation & Months $t-5$ to $t-1$ \\
+MOM12\_7 & \citet{novymarx2012momentum} & Returns 12 to 7 months before the holding month & As in the source \\
+RESMOM & \citet{blitz2011residual} & Fama--French three-factor residuals, 36-month estimation; residuals over months $-12$ to $-2$ summed and scaled by their volatility & CAPM residuals, 35-month estimation (no book equity, hence no value factor); market-plus-SMB version in Table~\ref{tab:revchecks} \\
+HIGH52 & \citet{george2004week} & Price relative to the 52-week high; overlapping multi-month holding periods & As in the source, one-month holding \\
+STR & \citet{jegadeesh1990evidence} & Prior-month return & As in the source \\
+LTR & \citet{debondt1985overreact} & 36-month formation and holding periods & Months $t-35$ to $t-12$ \\
+SEAS & \citet{heston2008seasonality} & Same-calendar-month returns at annual lags, effect lasting up to 20 years & Mean over annual lags 1--5 (at least two) \\
+BETA & \citet{frazzini2014betting} & Betas from five-year correlations of three-day returns and one-year volatilities, shrunk towards one; beta-neutral, rank-weighted, leveraged portfolio & \citet{dimson1979risk} beta over 252 sessions; low-minus-high quintile spread, not beta-neutral (its CAPM alpha is the closer test) \\
+IVOL & \citet{ang2006cross} & S.d.\ of daily Fama--French three-factor residuals, previous month & CAPM residuals; market-plus-SMB version in Table~\ref{tab:revchecks} \\
+TVOL & \citet{ang2006cross} & S.d.\ of daily returns, previous month & As in the source \\
+MAX & \citet{bali2011maxing} & Maximum daily return, previous month & As in the source \\
+DBETA & \citet{ang2006downside} & Beta on days with below-mean market returns, one year of daily data; main evidence contemporaneous & Same estimator, used to predict next-month returns \\
+SKEW & \citet{amaya2015realized} & Weekly realised skewness from five-minute returns & Skewness of daily returns over 252 sessions (no intraday data) \\
+ISKEW & \citet{boyer2010expected} & Expected idiosyncratic skewness from a cross-sectional forecasting model & Historical skewness of daily CAPM residuals over 252 sessions \\
+COSKEW & \citet{harvey2000conditional} & Standardised coskewness from 60 monthly returns & From 252 daily returns \\
+SIZE & \citet{banz1981relationship} & Market value of equity & Log capitalisation; share counts partly not point-in-time (PIT variant) \\
+AMIHUD & \citet{amihud2002illiquidity} & Mean daily $|r|$ per unit of dollar volume over a year & As in the source (rouble value, 252 sessions) \\
+DVOL & \citet{brennan1998alternative} & Dollar trading volume & Log mean daily rouble value, 252 sessions \\
+TURN & \citet{datar1998liquidity} & Share turnover over recent months & Rouble value over mean capitalisation, 12 months \\
+ZERO & \citet{lesmond1999new}; \citet{bekaert2007liquidity} & Proportion of zero-return days, a transaction-cost measure; priced in emerging markets in the second source & Proportion of no-trade or zero-return sessions, 252 sessions \\
+SPREAD & \citet{corwin2012simple}; \citet{amihud1986asset} & High--low spread estimator; spread premium in the second source & Estimator as in the first source, month $t$ \\
+CVVAL & \citet{chordia2001trading} & Coefficient of variation of monthly dollar volume over 36 months & Over 12 months \\
+ABVOL & \citet{gervais2001high} & Unusually high volume over a day or a week; returns over the following month & Mean daily value in month $t$ relative to months $t-12$ to $t-1$ \\
+DY & \citet{litzenberger1979effect} & Dividend yield in cross-sectional CAPM regressions & Trailing 12-month gross dividends over price, payers only \\
+\bottomrule
+\end{tabularx}
+\tabnote{Month $t$ is the formation month and $t+1$ the holding month. Whatever the holding rule of the source, every
+portfolio here is an equal-weighted quintile spread in U100 held for one month (Section~\ref{sec:design}); ``as in the
+source'' refers to the measure, not to the portfolio rule.}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{$t$-statistics across specifications}\label{tab:robust_t}
+\resizebox{\linewidth}{!}{\input{tables/tab_robust_t}}
+\tabnote{Newey--West $t$-statistics of the oriented long--short portfolios. Bold: rejection by the \RW{} rung of that
+specification (either sign). Base: baseline; VW: capped value weights; U50, UALL: universes; Terc.: terciles; Lag:
+one-session implementation lag; Ord.: preferred shares dropped when the ordinary share is in U100; Price: price-only
+holding returns; Ex-22: excluding 2022:02 and 2022:03; PIT: point-in-time size and turnover; Hedged: market-hedged returns $r_{k,t}-\hat\beta_k(r_{m,t}-r_{f,t})$, whose
+$t$-statistic differs slightly from the regression $t(\alpha)$ in Table~\ref{tab:baseline}.}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{Empirical-Bayes posteriors}\label{tab:eb}
+\resizebox{\linewidth}{!}{\input{tables/tab_eb}}
+\tabnote{OLS mean and posterior moments of the oriented monthly premium (\%). Clustered prior: $\mu_k=\mu_0+c_{j(k)}+w_k$
+with the seven clusters of Table~\ref{tab:defs}; hyperparameters by maximum marginal likelihood. No clusters: a single
+exchangeable prior (exploratory).}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_eb.pdf}
+\caption{OLS means (open circles) and empirical-Bayes posterior means with 95\% intervals (filled), clustered prior.}\label{fig:eb}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_corr.pdf}
+\caption{Correlations of the 25 oriented long--short returns (panel a) and the eigenvalues of their correlation matrix
+(panel b).}\label{fig:corr}
+\end{figure}
+
+\end{document}

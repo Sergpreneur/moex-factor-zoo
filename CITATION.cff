@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this code or the factor return series, please cite the paper."
+title: "How Many Factors Are Real on the Moscow Exchange? Replication package"
+authors:
+  - family-names: Nefedov
+    given-names: Sergey
+    affiliation: Lomonosov Moscow State University
+    orcid: "https://orcid.org/0009-0008-8929-4848"
+version: "1.0"
+date-released: "2026-10-13"
+license: MIT
+repository-code: "https://github.com/Sergpreneur/moex-factor-zoo"
+keywords:
+  - factor zoo
+  - multiple testing
+  - Romano-Wolf
+  - momentum
+  - Moscow Exchange
+preferred-citation:
+  type: article
+  title: "How Many Factors Are Real on the Moscow Exchange? A Pre-Specified Multiple-Testing Study of the Russian Factor Zoo"
+  authors:
+    - family-names: Nefedov
+      given-names: Sergey
+      orcid: "https://orcid.org/0009-0008-8929-4848"
+  year: 2026
+  notes: "Working paper"
